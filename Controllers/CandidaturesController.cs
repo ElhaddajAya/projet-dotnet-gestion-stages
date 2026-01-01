@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using GestionStages.Data;
+using GestionStages.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using GestionStages.Data;
-using GestionStages.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GestionStages.Controllers
 {
+    [Authorize] // Tous les utilisateurs connectés
     public class CandidaturesController : Controller
     {
         private readonly StagesDbContext _context;
@@ -19,14 +21,16 @@ namespace GestionStages.Controllers
             _context = context;
         }
 
-        // GET: Candidatures
+        // GET: Candidatures - Admin, Etudiant et Entreprise peuvent voir
+        [Authorize(Roles = "Admin,Etudiant,Entreprise")]
         public async Task<IActionResult> Index()
         {
             var stagesDbContext = _context.Candidatures.Include(c => c.Etudiant).Include(c => c.OffreStage);
             return View(await stagesDbContext.ToListAsync());
         }
 
-        // GET: Candidatures/Details/5
+        // GET: Candidatures/Details/5 - Admin, Etudiant et Entreprise peuvent voir les détails
+        [Authorize(Roles = "Admin,Etudiant,Entreprise")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -46,19 +50,19 @@ namespace GestionStages.Controllers
             return View(candidature);
         }
 
-        // GET: Candidatures/Create
+        // GET: Candidatures/Create - Seulement Admin et Etudiant peuvent créer
+        [Authorize(Roles = "Admin,Etudiant")]
         public IActionResult Create()
         {
-            ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Email");
-            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Description");
+            ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Nom");
+            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Titre");
             return View();
         }
 
-        // POST: Candidatures/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Candidatures/Create - Seulement Admin et Etudiant peuvent créer
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Create([Bind("Id,DateCandidature,Statut,EtudiantId,OffreStageId")] Candidature candidature)
         {
             if (ModelState.IsValid)
@@ -67,12 +71,13 @@ namespace GestionStages.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Email", candidature.EtudiantId);
-            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Description", candidature.OffreStageId);
+            ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Nom", candidature.EtudiantId);
+            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Titre", candidature.OffreStageId);
             return View(candidature);
         }
 
-        // GET: Candidatures/Edit/5
+        // GET: Candidatures/Edit/5 - Admin, Etudiant et Entreprise peuvent modifier (Entreprise pour changer le statut)
+        [Authorize(Roles = "Admin,Etudiant,Entreprise")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -85,16 +90,15 @@ namespace GestionStages.Controllers
             {
                 return NotFound();
             }
-            ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Email", candidature.EtudiantId);
-            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Description", candidature.OffreStageId);
+            ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Nom", candidature.EtudiantId);
+            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Titre", candidature.OffreStageId);
             return View(candidature);
         }
 
-        // POST: Candidatures/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Candidatures/Edit/5 - Admin, Etudiant et Entreprise peuvent modifier
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Etudiant,Entreprise")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,DateCandidature,Statut,EtudiantId,OffreStageId")] Candidature candidature)
         {
             if (id != candidature.Id)
@@ -122,12 +126,13 @@ namespace GestionStages.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Email", candidature.EtudiantId);
-            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Description", candidature.OffreStageId);
+            ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Nom", candidature.EtudiantId);
+            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Titre", candidature.OffreStageId);
             return View(candidature);
         }
 
-        // GET: Candidatures/Delete/5
+        // GET: Candidatures/Delete/5 - Seulement Admin peut supprimer
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -147,9 +152,10 @@ namespace GestionStages.Controllers
             return View(candidature);
         }
 
-        // POST: Candidatures/Delete/5
+        // POST: Candidatures/Delete/5 - Seulement Admin peut supprimer
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var candidature = await _context.Candidatures.FindAsync(id);

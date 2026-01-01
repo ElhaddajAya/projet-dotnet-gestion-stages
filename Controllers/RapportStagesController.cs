@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using GestionStages.Data;
+using GestionStages.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using GestionStages.Data;
-using GestionStages.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GestionStages.Controllers
 {
+    [Authorize] // Tous les utilisateurs connectés
     public class RapportStagesController : Controller
     {
         private readonly StagesDbContext _context;
@@ -19,14 +21,16 @@ namespace GestionStages.Controllers
             _context = context;
         }
 
-        // GET: RapportStages
+        // GET: RapportStages - Admin et Etudiant peuvent voir
+        [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Index()
         {
             var stagesDbContext = _context.RapportsStages.Include(r => r.Convention);
             return View(await stagesDbContext.ToListAsync());
         }
 
-        // GET: RapportStages/Details/5
+        // GET: RapportStages/Details/5 - Admin et Etudiant peuvent voir les détails
+        [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -45,18 +49,28 @@ namespace GestionStages.Controllers
             return View(rapportStage);
         }
 
-        // GET: RapportStages/Create
+        // GET: RapportStages/Create - Admin et Etudiant peuvent créer
+        [Authorize(Roles = "Admin,Etudiant")]
         public IActionResult Create()
         {
-            ViewData["ConventionId"] = new SelectList(_context.Conventions, "Id", "Id");
+            var conventions = _context.Conventions
+                .Include(c => c.Candidature)
+                    .ThenInclude(ca => ca.Etudiant)
+                .Select(c => new
+                {
+                    c.Id,
+                    Display = "Convention #" + c.Id + " - " + c.Candidature.Etudiant.Nom
+                })
+                .ToList();
+
+            ViewData["ConventionId"] = new SelectList(conventions, "Id", "Display");
             return View();
         }
 
-        // POST: RapportStages/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: RapportStages/Create - Admin et Etudiant peuvent créer
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Create([Bind("Id,Titre,NomFichier,DateDepot,ConventionId")] RapportStage rapportStage)
         {
             if (ModelState.IsValid)
@@ -65,11 +79,23 @@ namespace GestionStages.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ConventionId"] = new SelectList(_context.Conventions, "Id", "Id", rapportStage.ConventionId);
+
+            var conventions = _context.Conventions
+                .Include(c => c.Candidature)
+                    .ThenInclude(ca => ca.Etudiant)
+                .Select(c => new
+                {
+                    c.Id,
+                    Display = "Convention #" + c.Id + " - " + c.Candidature.Etudiant.Nom
+                })
+                .ToList();
+
+            ViewData["ConventionId"] = new SelectList(conventions, "Id", "Display", rapportStage.ConventionId);
             return View(rapportStage);
         }
 
-        // GET: RapportStages/Edit/5
+        // GET: RapportStages/Edit/5 - Admin et Etudiant peuvent modifier
+        [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -82,15 +108,25 @@ namespace GestionStages.Controllers
             {
                 return NotFound();
             }
-            ViewData["ConventionId"] = new SelectList(_context.Conventions, "Id", "Id", rapportStage.ConventionId);
+
+            var conventions = _context.Conventions
+                .Include(c => c.Candidature)
+                    .ThenInclude(ca => ca.Etudiant)
+                .Select(c => new
+                {
+                    c.Id,
+                    Display = "Convention #" + c.Id + " - " + c.Candidature.Etudiant.Nom
+                })
+                .ToList();
+
+            ViewData["ConventionId"] = new SelectList(conventions, "Id", "Display", rapportStage.ConventionId);
             return View(rapportStage);
         }
 
-        // POST: RapportStages/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: RapportStages/Edit/5 - Admin et Etudiant peuvent modifier
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Titre,NomFichier,DateDepot,ConventionId")] RapportStage rapportStage)
         {
             if (id != rapportStage.Id)
@@ -118,11 +154,23 @@ namespace GestionStages.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ConventionId"] = new SelectList(_context.Conventions, "Id", "Id", rapportStage.ConventionId);
+
+            var conventions = _context.Conventions
+                .Include(c => c.Candidature)
+                    .ThenInclude(ca => ca.Etudiant)
+                .Select(c => new
+                {
+                    c.Id,
+                    Display = "Convention #" + c.Id + " - " + c.Candidature.Etudiant.Nom
+                })
+                .ToList();
+
+            ViewData["ConventionId"] = new SelectList(conventions, "Id", "Display", rapportStage.ConventionId);
             return View(rapportStage);
         }
 
-        // GET: RapportStages/Delete/5
+        // GET: RapportStages/Delete/5 - Seulement Admin peut supprimer
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -141,9 +189,10 @@ namespace GestionStages.Controllers
             return View(rapportStage);
         }
 
-        // POST: RapportStages/Delete/5
+        // POST: RapportStages/Delete/5 - Seulement Admin peut supprimer
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var rapportStage = await _context.RapportsStages.FindAsync(id);

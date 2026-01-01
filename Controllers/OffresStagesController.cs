@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using GestionStages.Data;
+using GestionStages.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using GestionStages.Data;
-using GestionStages.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GestionStages.Controllers
 {
+    [Authorize] // Tous les utilisateurs connectés
     public class OffresStagesController : Controller
     {
         private readonly StagesDbContext _context;
@@ -19,14 +21,16 @@ namespace GestionStages.Controllers
             _context = context;
         }
 
-        // GET: OffresStages
+        // GET: OffresStages - Tout le monde peut voir (même non connectés)
+        [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
             var stagesDbContext = _context.OffresStages.Include(o => o.Entreprise);
             return View(await stagesDbContext.ToListAsync());
         }
 
-        // GET: OffresStages/Details/5
+        // GET: OffresStages/Details/5 - Tout le monde peut voir les détails
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -45,18 +49,18 @@ namespace GestionStages.Controllers
             return View(offresStage);
         }
 
-        // GET: OffresStages/Create
+        // GET: OffresStages/Create - Seulement Admin et Entreprise peuvent créer
+        [Authorize(Roles = "Admin,Entreprise")]
         public IActionResult Create()
         {
             ViewData["EntrepriseId"] = new SelectList(_context.Entreprises, "Id", "Nom");
             return View();
         }
 
-        // POST: OffresStages/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: OffresStages/Create - Seulement Admin et Entreprise peuvent créer
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Entreprise")]
         public async Task<IActionResult> Create([Bind("Id,Titre,Description,DureeMois,DateDebutSouhaitee,EntrepriseId")] OffresStage offresStage)
         {
             if (ModelState.IsValid)
@@ -69,7 +73,8 @@ namespace GestionStages.Controllers
             return View(offresStage);
         }
 
-        // GET: OffresStages/Edit/5
+        // GET: OffresStages/Edit/5 - Seulement Admin et Entreprise peuvent modifier
+        [Authorize(Roles = "Admin,Entreprise")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -86,11 +91,10 @@ namespace GestionStages.Controllers
             return View(offresStage);
         }
 
-        // POST: OffresStages/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: OffresStages/Edit/5 - Seulement Admin et Entreprise peuvent modifier
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Entreprise")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Titre,Description,DureeMois,DateDebutSouhaitee,EntrepriseId")] OffresStage offresStage)
         {
             if (id != offresStage.Id)
@@ -122,7 +126,8 @@ namespace GestionStages.Controllers
             return View(offresStage);
         }
 
-        // GET: OffresStages/Delete/5
+        // GET: OffresStages/Delete/5 - Seulement Admin et Entreprise peuvent supprimer
+        [Authorize(Roles = "Admin,Entreprise")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -141,9 +146,10 @@ namespace GestionStages.Controllers
             return View(offresStage);
         }
 
-        // POST: OffresStages/Delete/5
+        // POST: OffresStages/Delete/5 - Seulement Admin et Entreprise peuvent supprimer
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Entreprise")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var offresStage = await _context.OffresStages.FindAsync(id);

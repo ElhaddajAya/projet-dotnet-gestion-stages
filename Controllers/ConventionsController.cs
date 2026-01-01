@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using GestionStages.Data;
+using GestionStages.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using GestionStages.Data;
-using GestionStages.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GestionStages.Controllers
 {
+    [Authorize(Roles = "Admin")] // Seul l'Admin a accès à tout
     public class ConventionsController : Controller
     {
         private readonly StagesDbContext _context;
@@ -48,13 +50,21 @@ namespace GestionStages.Controllers
         // GET: Conventions/Create
         public IActionResult Create()
         {
-            ViewData["CandidatureId"] = new SelectList(_context.Candidatures, "Id", "Id");
+            var candidatures = _context.Candidatures
+                .Include(c => c.Etudiant)
+                .Include(c => c.OffreStage)
+                .Select(c => new
+                {
+                    c.Id,
+                    Display = c.Etudiant.Nom + " " + c.Etudiant.Prenom + " - " + c.OffreStage.Titre
+                })
+                .ToList();
+
+            ViewData["CandidatureId"] = new SelectList(candidatures, "Id", "Display");
             return View();
         }
 
         // POST: Conventions/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,DateSignature,DateDebut,DateFin,Statut,CandidatureId")] Convention convention)
@@ -65,7 +75,18 @@ namespace GestionStages.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CandidatureId"] = new SelectList(_context.Candidatures, "Id", "Id", convention.CandidatureId);
+
+            var candidatures = _context.Candidatures
+                .Include(c => c.Etudiant)
+                .Include(c => c.OffreStage)
+                .Select(c => new
+                {
+                    c.Id,
+                    Display = c.Etudiant.Nom + " " + c.Etudiant.Prenom + " - " + c.OffreStage.Titre
+                })
+                .ToList();
+
+            ViewData["CandidatureId"] = new SelectList(candidatures, "Id", "Display", convention.CandidatureId);
             return View(convention);
         }
 
@@ -82,13 +103,22 @@ namespace GestionStages.Controllers
             {
                 return NotFound();
             }
-            ViewData["CandidatureId"] = new SelectList(_context.Candidatures, "Id", "Id", convention.CandidatureId);
+
+            var candidatures = _context.Candidatures
+                .Include(c => c.Etudiant)
+                .Include(c => c.OffreStage)
+                .Select(c => new
+                {
+                    c.Id,
+                    Display = c.Etudiant.Nom + " " + c.Etudiant.Prenom + " - " + c.OffreStage.Titre
+                })
+                .ToList();
+
+            ViewData["CandidatureId"] = new SelectList(candidatures, "Id", "Display", convention.CandidatureId);
             return View(convention);
         }
 
         // POST: Conventions/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,DateSignature,DateDebut,DateFin,Statut,CandidatureId")] Convention convention)
@@ -118,7 +148,18 @@ namespace GestionStages.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CandidatureId"] = new SelectList(_context.Candidatures, "Id", "Id", convention.CandidatureId);
+
+            var candidatures = _context.Candidatures
+                .Include(c => c.Etudiant)
+                .Include(c => c.OffreStage)
+                .Select(c => new
+                {
+                    c.Id,
+                    Display = c.Etudiant.Nom + " " + c.Etudiant.Prenom + " - " + c.OffreStage.Titre
+                })
+                .ToList();
+
+            ViewData["CandidatureId"] = new SelectList(candidatures, "Id", "Display", convention.CandidatureId);
             return View(convention);
         }
 

@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using GestionStages.Data;
+using GestionStages.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using GestionStages.Data;
-using GestionStages.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GestionStages.Controllers
 {
+    [Authorize] // Tous les utilisateurs connectés
     public class EtudiantsController : Controller
     {
         private readonly StagesDbContext _context;
@@ -19,13 +21,15 @@ namespace GestionStages.Controllers
             _context = context;
         }
 
-        // GET: Etudiants
+        // GET: Etudiants - Admin et Etudiant peuvent voir la liste
+        [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.Etudiants.ToListAsync());
         }
 
-        // GET: Etudiants/Details/5
+        // GET: Etudiants/Details/5 - Admin et Etudiant peuvent voir les détails
+        [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -43,17 +47,17 @@ namespace GestionStages.Controllers
             return View(etudiant);
         }
 
-        // GET: Etudiants/Create
+        // GET: Etudiants/Create - Seulement Admin peut créer
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Etudiants/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Etudiants/Create - Seulement Admin peut créer
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([Bind("Id,Nom,Prenom,Email,Telephone,Filiere,Niveau")] Etudiant etudiant)
         {
             if (ModelState.IsValid)
@@ -65,7 +69,8 @@ namespace GestionStages.Controllers
             return View(etudiant);
         }
 
-        // GET: Etudiants/Edit/5
+        // GET: Etudiants/Edit/5 - Admin et Etudiant peuvent modifier
+        [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -81,11 +86,10 @@ namespace GestionStages.Controllers
             return View(etudiant);
         }
 
-        // POST: Etudiants/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Etudiants/Edit/5 - Admin et Etudiant peuvent modifier
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Nom,Prenom,Email,Telephone,Filiere,Niveau")] Etudiant etudiant)
         {
             if (id != etudiant.Id)
@@ -116,7 +120,8 @@ namespace GestionStages.Controllers
             return View(etudiant);
         }
 
-        // GET: Etudiants/Delete/5
+        // GET: Etudiants/Delete/5 - Seulement Admin peut supprimer
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -134,9 +139,10 @@ namespace GestionStages.Controllers
             return View(etudiant);
         }
 
-        // POST: Etudiants/Delete/5
+        // POST: Etudiants/Delete/5 - Seulement Admin peut supprimer
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var etudiant = await _context.Etudiants.FindAsync(id);
