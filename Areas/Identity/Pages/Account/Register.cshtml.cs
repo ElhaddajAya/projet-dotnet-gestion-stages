@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
+using GestionStages.Data;
+using GestionStages.Models;
+using Humanizer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -30,13 +33,15 @@ namespace GestionStages.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly StagesDbContext _stagesContext; // accès à la base de données des stages
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
             IUserStore<IdentityUser> userStore,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            StagesDbContext stagesContext) // injection du contexte
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -44,59 +49,33 @@ namespace GestionStages.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _stagesContext = stagesContext; // ajout du contexte
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string ReturnUrl { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
         // Liste des rôles disponibles pour l'inscription
         public List<SelectListItem> RolesDisponibles { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
+
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Required]
             [EmailAddress]
             [Display(Name = "Email")]
             public string Email { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
             [DataType(DataType.Password)]
             [Display(Name = "Password")]
             public string Password { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [DataType(DataType.Password)]
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
@@ -142,16 +121,51 @@ namespace GestionStages.Areas.Identity.Pages.Account
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
 
-                // On crée l'utilisateur dans la base
+                // On crée l'utilisateur dans la base Identity
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("Un nouvel utilisateur a créé un compte avec mot de passe.");
 
-                    // IMPORTANT : On assigne le rôle choisi à l'utilisateur
+                    // On assigne le rôle choisi à l'utilisateur
                     await _userManager.AddToRoleAsync(user, Input.Role);
                     _logger.LogInformation($"Rôle '{Input.Role}' assigné à l'utilisateur {Input.Email}");
+
+                    // On crée automatiquement l'entité Etudiant ou Entreprise
+                    if (Input.Role == "Etudiant")
+                    {
+                        // Créer un nouvel étudiant avec l'email de l'utilisateur
+                        var etudiant = new Etudiant
+                        {
+                            Email = Input.Email,
+                            Nom = "", // L'étudiant pourra remplir ces informations plus tard
+                            Prenom = "",
+                            Telephone = "",
+                            Filiere = "",
+                            Niveau = ""
+                        };
+
+                        _stagesContext.Etudiants.Add(etudiant);
+                        await _stagesContext.SaveChangesAsync();
+                        _logger.LogInformation($"Profil étudiant créé pour {Input.Email}");
+                    }
+                    else if (Input.Role == "Entreprise")
+                    {
+                        // Créer une nouvelle entreprise avec l'email de l'utilisateur
+                        var entreprise = new Entreprise
+                        {
+                            EmailContact = Input.Email,
+                            Nom = "", // L'entreprise pourra remplir ces informations plus tard
+                            Adresse = "",
+                            Telephone = "",
+                            Secteur = ""
+                        };
+
+                        _stagesContext.Entreprises.Add(entreprise);
+                        await _stagesContext.SaveChangesAsync();
+                        _logger.LogInformation($"Profil entreprise créé pour {Input.Email}");
+                    }
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
