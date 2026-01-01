@@ -2,6 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -10,14 +19,6 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Logging;
 
 namespace GestionStages.Areas.Identity.Pages.Account
 {
@@ -64,6 +65,9 @@ namespace GestionStages.Areas.Identity.Pages.Account
         /// </summary>
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
+        // Liste des rôles disponibles pour l'inscription
+        public List<SelectListItem> RolesDisponibles { get; set; }
+
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
@@ -97,6 +101,11 @@ namespace GestionStages.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            // Nouveau champ pour choisir le rôle
+            [Required(ErrorMessage = "Veuillez choisir un type de compte")]
+            [Display(Name = "Type de compte")]
+            public string Role { get; set; }
         }
 
 
@@ -104,23 +113,45 @@ namespace GestionStages.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+            // On prépare la liste des rôles disponibles
+            // Seulement Etudiant et Entreprise (pas Admin)
+            RolesDisponibles = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "Etudiant", Text = "Étudiant" },
+                new SelectListItem { Value = "Entreprise", Text = "Entreprise" }
+            };
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            // On recharge la liste des rôles en cas d'erreur
+            RolesDisponibles = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "Etudiant", Text = "Étudiant" },
+                new SelectListItem { Value = "Entreprise", Text = "Entreprise" }
+            };
+
             if (ModelState.IsValid)
             {
+                // On crée un nouvel utilisateur
                 var user = CreateUser();
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+                // On crée l'utilisateur dans la base
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("User created a new account with password.");
+                    _logger.LogInformation("Un nouvel utilisateur a créé un compte avec mot de passe.");
+
+                    // IMPORTANT : On assigne le rôle choisi à l'utilisateur
+                    await _userManager.AddToRoleAsync(user, Input.Role);
+                    _logger.LogInformation($"Rôle '{Input.Role}' assigné à l'utilisateur {Input.Email}");
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -131,8 +162,8 @@ namespace GestionStages.Areas.Identity.Pages.Account
                         values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
                         protocol: Request.Scheme);
 
-                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                    await _emailSender.SendEmailAsync(Input.Email, "Confirmez votre email",
+                        $"Veuillez confirmer votre compte en <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>cliquant ici</a>.");
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
@@ -140,17 +171,20 @@ namespace GestionStages.Areas.Identity.Pages.Account
                     }
                     else
                     {
+                        // On connecte automatiquement l'utilisateur
                         await _signInManager.SignInAsync(user, isPersistent: false);
                         return LocalRedirect(returnUrl);
                     }
                 }
+
+                // Si la création a échoué, on affiche les erreurs
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
 
-            // If we got this far, something failed, redisplay form
+            // Si on arrive ici, c'est qu'il y a eu une erreur
             return Page();
         }
 
