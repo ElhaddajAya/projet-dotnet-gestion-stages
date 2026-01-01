@@ -25,7 +25,19 @@ namespace GestionStages.Controllers
         [Authorize(Roles = "Admin,Entreprise")]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Entreprises.ToListAsync());
+            // Si l'utilisateur est Admin, on affiche toutes les entreprises
+            if (User.IsInRole("Admin"))
+            {
+                return View(await _context.Entreprises.ToListAsync());
+            }
+
+            // Si c'est une Entreprise, on affiche seulement son profil
+            var userEmail = User.Identity.Name;
+            var entreprises = await _context.Entreprises
+                .Where(e => e.EmailContact == userEmail)
+                .ToListAsync();
+
+            return View(entreprises);
         }
 
         // GET: Entreprises/Details/5 - Admin et Entreprise peuvent voir les détails
@@ -42,6 +54,16 @@ namespace GestionStages.Controllers
             if (entreprise == null)
             {
                 return NotFound();
+            }
+
+            // Si c'est une Entreprise, vérifier que c'est bien son profil
+            if (User.IsInRole("Entreprise"))
+            {
+                var userEmail = User.Identity.Name;
+                if (entreprise.EmailContact != userEmail)
+                {
+                    return Forbid();
+                }
             }
 
             return View(entreprise);
@@ -83,6 +105,17 @@ namespace GestionStages.Controllers
             {
                 return NotFound();
             }
+
+            // Si c'est une Entreprise, vérifier que c'est bien son profil
+            if (User.IsInRole("Entreprise"))
+            {
+                var userEmail = User.Identity.Name;
+                if (entreprise.EmailContact != userEmail)
+                {
+                    return Forbid();
+                }
+            }
+
             return View(entreprise);
         }
 
@@ -95,6 +128,16 @@ namespace GestionStages.Controllers
             if (id != entreprise.Id)
             {
                 return NotFound();
+            }
+
+            // Si c'est une Entreprise, vérifier que c'est bien son profil
+            if (User.IsInRole("Entreprise"))
+            {
+                var userEmail = User.Identity.Name;
+                if (entreprise.EmailContact != userEmail)
+                {
+                    return Forbid();
+                }
             }
 
             if (ModelState.IsValid)

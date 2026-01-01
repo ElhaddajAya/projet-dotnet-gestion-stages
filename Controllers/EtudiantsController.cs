@@ -21,11 +21,23 @@ namespace GestionStages.Controllers
             _context = context;
         }
 
-        // GET: Etudiants - Admin et Etudiant peuvent voir la liste
+        // GET: Etudiants - Admin, et Etudiant peut voire son profil
         [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Etudiants.ToListAsync());
+            // Si l'utilisateur est Admin, on affiche tous les étudiants
+            if (User.IsInRole("Admin"))
+            {
+                return View(await _context.Etudiants.ToListAsync());
+            }
+
+            // Si c'est un Etudiant, on affiche seulement son profil
+            var userEmail = User.Identity.Name;
+            var etudiants = await _context.Etudiants
+                .Where(e => e.Email == userEmail)
+                .ToListAsync();
+
+            return View(etudiants);
         }
 
         // GET: Etudiants/Details/5 - Admin et Etudiant peuvent voir les détails
@@ -42,6 +54,17 @@ namespace GestionStages.Controllers
             if (etudiant == null)
             {
                 return NotFound();
+            }
+
+            // Si c'est un Etudiant, vérifier que c'est bien son profil
+            if (User.IsInRole("Etudiant"))
+            {
+                var userEmail = User.Identity.Name;
+                if (etudiant.Email != userEmail)
+                {
+                    // Interdire l'accès au profil d'un autre étudiant
+                    return Forbid();
+                }
             }
 
             return View(etudiant);
@@ -83,6 +106,17 @@ namespace GestionStages.Controllers
             {
                 return NotFound();
             }
+
+            // Si c'est un Etudiant, vérifier que c'est bien son profil
+            if (User.IsInRole("Etudiant"))
+            {
+                var userEmail = User.Identity.Name;
+                if (etudiant.Email != userEmail)
+                {
+                    return Forbid();
+                }
+            }
+
             return View(etudiant);
         }
 
@@ -95,6 +129,16 @@ namespace GestionStages.Controllers
             if (id != etudiant.Id)
             {
                 return NotFound();
+            }
+
+            // Si c'est un Etudiant, vérifier que c'est bien son profil
+            if (User.IsInRole("Etudiant"))
+            {
+                var userEmail = User.Identity.Name;
+                if (etudiant.Email != userEmail)
+                {
+                    return Forbid();
+                }
             }
 
             if (ModelState.IsValid)
