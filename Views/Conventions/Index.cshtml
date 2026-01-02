@@ -1,12 +1,12 @@
 ﻿@model IEnumerable<GestionStages.Models.Convention>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Conventions";
 }
 
-<h1>Index</h1>
+<h1>Conventions</h1>
 
-<!-- Afficher le message de succès -->
+<!-- Messages TempData -->
 @if (TempData["Success"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -15,7 +15,6 @@
     </div>
 }
 
-<!-- Afficher le message d'erreur -->
 @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -24,7 +23,6 @@
     </div>
 }
 
-<!-- Afficher le message d'avertissement -->
 @if (TempData["Warning"] != null)
 {
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -33,54 +31,50 @@
     </div>
 }
 
+<!-- Bouton Create - Admin only (pas besoin de vérification car le contrôleur est déjà [Authorize(Roles = "Admin")]) -->
 <p>
-    <a asp-action="Create">Create New</a>
+    <a asp-action="Create" class="btn btn-primary">Créer une nouvelle convention</a>
 </p>
+
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.DateSignature)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateDebut)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateFin)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Statut)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Candidature)
-            </th>
-            <th></th>
+            <th>Date de signature</th>
+            <th>Date de début</th>
+            <th>Date de fin</th>
+            <th>Statut</th>
+            <th>Candidature</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateSignature)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateDebut)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateFin)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Statut)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Candidature.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.DateSignature.ToString("dd/MM/yyyy")</td>
+                <td>@item.DateDebut.ToString("dd/MM/yyyy")</td>
+                <td>@item.DateFin.ToString("dd/MM/yyyy")</td>
+                <td>
+                    @if (item.Statut == "En cours")
+                    {
+                        <span class="badge bg-primary">@item.Statut</span>
+                    }
+                    else if (item.Statut == "Terminée")
+                    {
+                        <span class="badge bg-success">@item.Statut</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">@item.Statut</span>
+                    }
+                </td>
+                <td>Candidature #@item.Candidature.Id</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Détails</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Modifier</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Supprimer</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

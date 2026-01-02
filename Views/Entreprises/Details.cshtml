@@ -1,48 +1,39 @@
 ﻿@model GestionStages.Models.Entreprise
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Détails de l'entreprise";
 }
 
-<h1>Details</h1>
+<h1>Détails de l'entreprise</h1>
 
 <div>
-    <h4>Entreprise</h4>
+    <h4>Informations</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Nom)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Nom)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Adresse)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Adresse)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Telephone)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Telephone)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.EmailContact)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.EmailContact)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Secteur)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Secteur)
-        </dd>
+        <dt class="col-sm-2">Nom</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Nom)</dd>
+
+        <dt class="col-sm-2">Adresse</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Adresse)</dd>
+
+        <dt class="col-sm-2">Téléphone</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Telephone)</dd>
+
+        <dt class="col-sm-2">Email Contact</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.EmailContact)</dd>
+
+        <dt class="col-sm-2">Secteur</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Secteur)</dd>
     </dl>
 </div>
+
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Modifier</a>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger">Supprimer</a>
+    }
+
+    <a asp-action="Index" class="btn btn-secondary">Retour à la liste</a>
 </div>

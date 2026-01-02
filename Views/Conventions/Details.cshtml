@@ -1,48 +1,35 @@
 ﻿@model GestionStages.Models.Convention
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Détails de la convention";
 }
 
-<h1>Details</h1>
+<h1>Détails de la convention</h1>
 
 <div>
-    <h4>Convention</h4>
+    <h4>Informations</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateSignature)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateSignature)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateDebut)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateDebut)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateFin)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateFin)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Statut)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Statut)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Candidature)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Candidature.Id)
-        </dd>
+        <dt class="col-sm-2">Date de signature</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateSignature)</dd>
+
+        <dt class="col-sm-2">Date de début</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateDebut)</dd>
+
+        <dt class="col-sm-2">Date de fin</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateFin)</dd>
+
+        <dt class="col-sm-2">Statut</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Statut)</dd>
+
+        <dt class="col-sm-2">Candidature</dt>
+        <dd class="col-sm-10">Candidature #@Html.DisplayFor(model => model.Candidature.Id)</dd>
     </dl>
 </div>
+
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <!-- Tous les boutons - Seulement Admin car les conventions sont Admin-only -->
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Modifier</a>
+    <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger">Supprimer</a>
+    <a asp-action="Index" class="btn btn-secondary">Retour à la liste</a>
 </div>

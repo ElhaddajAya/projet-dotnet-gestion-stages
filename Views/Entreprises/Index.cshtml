@@ -1,12 +1,12 @@
 ﻿@model IEnumerable<GestionStages.Models.Entreprise>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Entreprises";
 }
 
-<h1>Index</h1>
+<h1>Entreprises</h1>
 
-<!-- Afficher le message de succès -->
+<!-- Messages TempData -->
 @if (TempData["Success"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -15,7 +15,6 @@
     </div>
 }
 
-<!-- Afficher le message d'erreur -->
 @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -24,7 +23,6 @@
     </div>
 }
 
-<!-- Afficher le message d'avertissement -->
 @if (TempData["Warning"] != null)
 {
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -33,54 +31,45 @@
     </div>
 }
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<!-- Bouton Create - Seulement Admin -->
+@if (User.IsInRole("Admin"))
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Créer une nouvelle entreprise</a>
+    </p>
+}
+
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Nom)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Adresse)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Telephone)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EmailContact)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Secteur)
-            </th>
-            <th></th>
+            <th>Nom</th>
+            <th>Adresse</th>
+            <th>Téléphone</th>
+            <th>Email Contact</th>
+            <th>Secteur</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nom)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Adresse)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Telephone)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EmailContact)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Secteur)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Nom)</td>
+                <td>@Html.DisplayFor(modelItem => item.Adresse)</td>
+                <td>@Html.DisplayFor(modelItem => item.Telephone)</td>
+                <td>@Html.DisplayFor(modelItem => item.EmailContact)</td>
+                <td>@Html.DisplayFor(modelItem => item.Secteur)</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Détails</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Modifier</a>
+
+                    <!-- Bouton Delete - Seulement Admin -->
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Supprimer</a>
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

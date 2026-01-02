@@ -1,42 +1,52 @@
 ﻿@model GestionStages.Models.Candidature
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Détails de la candidature";
 }
 
-<h1>Details</h1>
+<h1>Détails de la candidature</h1>
 
 <div>
-    <h4>Candidature</h4>
+    <h4>Informations</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateCandidature)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateCandidature)
+        <dt class="col-sm-2">Date de candidature</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateCandidature)</dd>
+
+        <dt class="col-sm-2">Statut</dt>
+        <dd class="col-sm-10">
+            @if (Model.Statut == "Acceptée")
+            {
+                <span class="badge bg-success">@Model.Statut</span>
+            }
+            else if (Model.Statut == "Refusée")
+            {
+                <span class="badge bg-danger">@Model.Statut</span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark">@Model.Statut</span>
+            }
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Statut)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Statut)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Etudiant)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Etudiant.Email)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.OffreStage)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.OffreStage.Description)
-        </dd>
+
+        <dt class="col-sm-2">Étudiant</dt>
+        <dd class="col-sm-10">@Model.Etudiant.Nom @Model.Etudiant.Prenom (@Model.Etudiant.Email)</dd>
+
+        <dt class="col-sm-2">Offre de stage</dt>
+        <dd class="col-sm-10">@Model.OffreStage.Titre</dd>
+
+        <dt class="col-sm-2">Description de l'offre</dt>
+        <dd class="col-sm-10">@Model.OffreStage.Description</dd>
     </dl>
 </div>
+
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Modifier</a>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger">Supprimer</a>
+    }
+
+    <a asp-action="Index" class="btn btn-secondary">Retour à la liste</a>
 </div>

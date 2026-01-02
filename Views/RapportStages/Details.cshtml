@@ -1,42 +1,41 @@
 ﻿@model GestionStages.Models.RapportStage
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Détails du rapport";
 }
 
-<h1>Details</h1>
+<h1>Détails du rapport de stage</h1>
 
 <div>
-    <h4>RapportStage</h4>
+    <h4>Informations</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Titre)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Titre)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.NomFichier)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.NomFichier)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateDepot)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateDepot)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Convention)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Convention.Id)
-        </dd>
+        <dt class="col-sm-2">Titre</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Titre)</dd>
+
+        <dt class="col-sm-2">Nom du fichier</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.NomFichier)</dd>
+
+        <dt class="col-sm-2">Date de dépôt</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateDepot)</dd>
+
+        <dt class="col-sm-2">Convention</dt>
+        <dd class="col-sm-10">Convention #@Html.DisplayFor(model => model.Convention.Id)</dd>
     </dl>
 </div>
+
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <!-- Bouton Edit - Admin et Etudiant seulement -->
+    @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
+    {
+        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Modifier</a>
+    }
+
+    <!-- Bouton Delete - Seulement Admin -->
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger">Supprimer</a>
+    }
+
+    <a asp-action="Index" class="btn btn-secondary">Retour à la liste</a>
 </div>

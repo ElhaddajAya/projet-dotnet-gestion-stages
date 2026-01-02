@@ -1,12 +1,12 @@
 ﻿@model IEnumerable<GestionStages.Models.RapportStage>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Rapports de stage";
 }
 
-<h1>Index</h1>
+<h1>Rapports de stage</h1>
 
-<!-- Afficher le message de succès -->
+<!-- Messages TempData -->
 @if (TempData["Success"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -15,7 +15,6 @@
     </div>
 }
 
-<!-- Afficher le message d'erreur -->
 @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -24,7 +23,6 @@
     </div>
 }
 
-<!-- Afficher le message d'avertissement -->
 @if (TempData["Warning"] != null)
 {
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -33,48 +31,47 @@
     </div>
 }
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<!-- Bouton Create - Admin et Etudiant seulement -->
+@if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Créer un rapport de stage</a>
+    </p>
+}
+
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Titre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.NomFichier)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateDepot)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Convention)
-            </th>
-            <th></th>
+            <th>Titre</th>
+            <th>Nom du fichier</th>
+            <th>Date de dépôt</th>
+            <th>Convention</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Titre)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NomFichier)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateDepot)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Convention.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Titre)</td>
+                <td>@Html.DisplayFor(modelItem => item.NomFichier)</td>
+                <td>@Html.DisplayFor(modelItem => item.DateDepot)</td>
+                <td>Convention #@Html.DisplayFor(modelItem => item.Convention.Id)</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Détails</a>
+
+                    @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Modifier</a>
+                    }
+
+                    <!-- Bouton Delete - Seulement Admin -->
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Supprimer</a>
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
