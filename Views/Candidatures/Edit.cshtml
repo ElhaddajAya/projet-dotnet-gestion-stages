@@ -4,46 +4,121 @@
     ViewData["Title"] = "Edit";
 }
 
-<h1>Edit</h1>
+@{
+    var isEntreprise = ViewData["ReadOnly"] != null && (bool)ViewData["ReadOnly"];
+}
+
+<h1>Modifier</h1>
 
 <h4>Candidature</h4>
 <hr />
+
+<!-- Afficher le message de succès -->
+@* @if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+} *@
+
+<!-- Afficher le message d'erreur -->
+@* @if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+} *@
+
+@if (isEntreprise)
+{
+    <div class="alert alert-info">
+        <strong>Note :</strong> En tant qu'entreprise, vous ne pouvez modifier que le <strong>statut</strong> de la candidature.
+    </div>
+}
+
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-            <div class="form-group">
+
+            <!-- Date de candidature -->
+            <div class="form-group mb-3">
                 <label asp-for="DateCandidature" class="control-label"></label>
-                <input asp-for="DateCandidature" class="form-control" />
+                @if (isEntreprise)
+                {
+                    <!-- En lecture seule pour l'entreprise -->
+                    <input asp-for="DateCandidature" class="form-control" type="date" readonly />
+                }
+                else
+                {
+                    <input asp-for="DateCandidature" class="form-control" type="date" />
+                }
                 <span asp-validation-for="DateCandidature" class="text-danger"></span>
             </div>
-            <div class="form-group">
+
+            <!-- Statut - MODIFIABLE par tout le monde -->
+            <div class="form-group mb-3">
                 <label asp-for="Statut" class="control-label"></label>
-                <input asp-for="Statut" class="form-control" />
+                <select asp-for="Statut" class="form-control">
+                    <option value="En attente">En attente</option>
+                    <option value="Acceptée">Acceptée</option>
+                    <option value="Refusée">Refusée</option>
+                </select>
                 <span asp-validation-for="Statut" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="EtudiantId" class="control-label"></label>
-                <select asp-for="EtudiantId" class="form-control" asp-items="ViewBag.EtudiantId"></select>
+
+            <!-- Étudiant -->
+            <div class="form-group mb-3">
+                <label asp-for="EtudiantId" class="control-label">Étudiant</label>
+                @if (isEntreprise)
+                {
+                    <!-- En lecture seule pour l'entreprise -->
+                    <select asp-for="EtudiantId" class="form-control" asp-items="ViewBag.EtudiantId" disabled>
+                        <option value="">-- Sélectionner un étudiant --</option>
+                    </select>
+                    <!-- Champ caché pour envoyer la valeur -->
+                    <input type="hidden" asp-for="EtudiantId" />
+                }
+                else
+                {
+                    <select asp-for="EtudiantId" class="form-control" asp-items="ViewBag.EtudiantId">
+                        <option value="">-- Sélectionner un étudiant --</option>
+                    </select>
+                }
                 <span asp-validation-for="EtudiantId" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="OffreStageId" class="control-label"></label>
-                <select asp-for="OffreStageId" class="form-control" asp-items="ViewBag.OffreStageId"></select>
+
+            <!-- Offre de stage -->
+            <div class="form-group mb-3">
+                <label asp-for="OffreStageId" class="control-label">Offre de stage</label>
+                @if (isEntreprise)
+                {
+                    <!-- En lecture seule pour l'entreprise -->
+                    <select asp-for="OffreStageId" class="form-control" asp-items="ViewBag.OffreStageId" disabled>
+                        <option value="">-- Sélectionner une offre --</option>
+                    </select>
+                    <!-- Champ caché pour envoyer la valeur -->
+                    <input type="hidden" asp-for="OffreStageId" />
+                }
+                else
+                {
+                    <select asp-for="OffreStageId" class="form-control" asp-items="ViewBag.OffreStageId">
+                        <option value="">-- Sélectionner une offre --</option>
+                    </select>
+                }
                 <span asp-validation-for="OffreStageId" class="text-danger"></span>
             </div>
+
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <input type="submit" value="Enregistrer" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index">Retour à la liste</a>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
