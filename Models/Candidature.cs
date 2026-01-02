@@ -5,6 +5,7 @@
         public int Id { get; set; }
         public DateTime DateCandidature { get; set; } = DateTime.Now;
         public string Statut { get; set; } = "En attente"; // En attente, Acceptée, Refusée
+        public string? CheminCV { get; set; } // Stocke le chemin du fichier CV
 
         // Foreign Keys
         public int EtudiantId { get; set; }
