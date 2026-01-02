@@ -4,10 +4,37 @@
     ViewData["Title"] = "Create";
 }
 
-<h1>Create</h1>
+<h1>Créer une offre de stage</h1>
 
-<h4>OffresStage</h4>
+<h4>Nouvelle offre</h4>
 <hr />
+
+<!-- Afficher le message de succès -->
+@* @if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+ *@
+<!-- Afficher le message d'erreur -->
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<!-- Afficher les erreurs de validation -->
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <h5>Erreurs de validation :</h5>
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Create">

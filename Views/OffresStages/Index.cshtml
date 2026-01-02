@@ -1,4 +1,7 @@
 ﻿@model IEnumerable<GestionStages.Models.OffresStage>
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
 
 @{
     ViewData["Title"] = "Index";
@@ -6,54 +9,70 @@
 
 <h1>Index</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<!-- Afficher le message de succès -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        ✅ @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Afficher le message d'erreur -->
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        ❌ @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Afficher le message d'avertissement -->
+@if (TempData["Warning"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        ⚠️ @TempData["Warning"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- IMPORTANT : Masquer le bouton Create selon le rôle -->
+@if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Créer une nouvelle offre</a>
+    </p>
+}
+
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Titre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DureeMois)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateDebutSouhaitee)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Entreprise)
-            </th>
-            <th></th>
+            <th>Titre</th>
+            <th>Entreprise</th>
+            <th>Durée (mois)</th>
+            <th>Date de début</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Titre)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DureeMois)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateDebutSouhaitee)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Entreprise.Nom)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Titre)</td>
+                <td>@Html.DisplayFor(modelItem => item.Entreprise.Nom)</td>
+                <td>@Html.DisplayFor(modelItem => item.DureeMois)</td>
+                <td>@Html.DisplayFor(modelItem => item.DateDebutSouhaitee)</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Détails</a>
+
+                    <!-- Masquer Edit/Delete pour les étudiants -->
+                    @if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Modifier</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Supprimer</a>
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

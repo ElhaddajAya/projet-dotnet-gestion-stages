@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -48,9 +47,9 @@ namespace GestionStages.Controllers
         }
 
         // GET: Conventions/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create() // ✅ Ajout de async
         {
-            var candidatures = _context.Candidatures
+            var candidatures = await _context.Candidatures // ✅ Ajout de await
                 .Include(c => c.Etudiant)
                 .Include(c => c.OffreStage)
                 .Select(c => new
@@ -58,7 +57,7 @@ namespace GestionStages.Controllers
                     c.Id,
                     Display = c.Etudiant.Nom + " " + c.Etudiant.Prenom + " - " + c.OffreStage.Titre
                 })
-                .ToList();
+                .ToListAsync(); // ToListAsync au lieu de ToList
 
             ViewData["CandidatureId"] = new SelectList(candidatures, "Id", "Display");
             return View();
@@ -69,14 +68,19 @@ namespace GestionStages.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,DateSignature,DateDebut,DateFin,Statut,CandidatureId")] Convention convention)
         {
+            // Retirer la navigation de la validation
+            ModelState.Remove("Candidature");
+            ModelState.Remove("Rapport");
+
             if (ModelState.IsValid)
             {
                 _context.Add(convention);
                 await _context.SaveChangesAsync();
+                TempData["Success"] = "Convention créée avec succès !";
                 return RedirectToAction(nameof(Index));
             }
 
-            var candidatures = _context.Candidatures
+            var candidatures = await _context.Candidatures
                 .Include(c => c.Etudiant)
                 .Include(c => c.OffreStage)
                 .Select(c => new
@@ -84,7 +88,7 @@ namespace GestionStages.Controllers
                     c.Id,
                     Display = c.Etudiant.Nom + " " + c.Etudiant.Prenom + " - " + c.OffreStage.Titre
                 })
-                .ToList();
+                .ToListAsync();
 
             ViewData["CandidatureId"] = new SelectList(candidatures, "Id", "Display", convention.CandidatureId);
             return View(convention);
@@ -104,7 +108,7 @@ namespace GestionStages.Controllers
                 return NotFound();
             }
 
-            var candidatures = _context.Candidatures
+            var candidatures = await _context.Candidatures
                 .Include(c => c.Etudiant)
                 .Include(c => c.OffreStage)
                 .Select(c => new
@@ -112,7 +116,7 @@ namespace GestionStages.Controllers
                     c.Id,
                     Display = c.Etudiant.Nom + " " + c.Etudiant.Prenom + " - " + c.OffreStage.Titre
                 })
-                .ToList();
+                .ToListAsync();
 
             ViewData["CandidatureId"] = new SelectList(candidatures, "Id", "Display", convention.CandidatureId);
             return View(convention);
@@ -128,12 +132,17 @@ namespace GestionStages.Controllers
                 return NotFound();
             }
 
+            // Retirer la navigation de la validation
+            ModelState.Remove("Candidature");
+            ModelState.Remove("Rapport");
+
             if (ModelState.IsValid)
             {
                 try
                 {
                     _context.Update(convention);
                     await _context.SaveChangesAsync();
+                    TempData["Success"] = "Convention modifiée avec succès !";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -149,7 +158,7 @@ namespace GestionStages.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var candidatures = _context.Candidatures
+            var candidatures = await _context.Candidatures
                 .Include(c => c.Etudiant)
                 .Include(c => c.OffreStage)
                 .Select(c => new
@@ -157,7 +166,7 @@ namespace GestionStages.Controllers
                     c.Id,
                     Display = c.Etudiant.Nom + " " + c.Etudiant.Prenom + " - " + c.OffreStage.Titre
                 })
-                .ToList();
+                .ToListAsync();
 
             ViewData["CandidatureId"] = new SelectList(candidatures, "Id", "Display", convention.CandidatureId);
             return View(convention);
@@ -191,9 +200,10 @@ namespace GestionStages.Controllers
             if (convention != null)
             {
                 _context.Conventions.Remove(convention);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Convention supprimée avec succès !";
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 

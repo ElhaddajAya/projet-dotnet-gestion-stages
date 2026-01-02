@@ -18,6 +18,7 @@ namespace GestionStages.Models
         public DateTime? DateDebutSouhaitee { get; set; }
 
         // Clé étrangère
+        [Required(ErrorMessage = "L'entreprise est obligatoire")]
         public int EntrepriseId { get; set; }
 
         // Navigation
