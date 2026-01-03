@@ -1,95 +1,68 @@
-﻿@model GestionStages.Models.Candidature
+@model GestionStages.Models.Candidature
 
 @{
     ViewData["Title"] = "Postuler";
 }
 
 <h1>Postuler à une offre de stage</h1>
-
 <hr />
-
-<!-- Messages de feedback -->
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <strong>✓</strong> @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <strong>✗</strong> @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
 
 <div class="row">
     <div class="col-md-8">
-        <form asp-action="Create" method="post" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <form method="post" action="/Candidatures/Create" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
 
             @if (User.IsInRole("Etudiant"))
             {
-                <!-- Pour l'étudiant : afficher l'offre en texte (non modifiable) -->
+                <!-- Pour l'étudiant : afficher l'offre en texte readonly -->
                 <div class="form-group mb-3">
                     <label class="control-label">Offre de stage *</label>
                     @{
-                        var selectedOffer = (ViewBag.OffreStageId as SelectList)?.SelectedValue;
+                        var selectedValue = (ViewBag.OffreStageId as SelectList)?.SelectedValue?.ToString() ?? "";
                         var offerText = (ViewBag.OffreStageId as SelectList)?
-                        .FirstOrDefault(x => x.Value == selectedOffer?.ToString())?.Text ?? "Aucune offre sélectionnée";
+                            .FirstOrDefault(x => x.Value == selectedValue)?.Text ?? "Aucune offre";
                     }
-                    <input type="text" class="form-control" value="@offerText" readonly />
-                    <!-- Champ caché avec l'ID de l'offre -->
-                    <input type="hidden" name="OffreStageId" value="@selectedOffer" />
+                    <input type="text" class="form-control" value="@offerText" readonly style="background-color: #e9ecef;" />
+                    <input type="hidden" name="OffreStageId" value="@selectedValue" />
                 </div>
             }
             else
             {
-                <!-- Pour l'admin : sélection modifiable -->
+                <!-- Pour l'admin : sélection normale -->
                 <div class="form-group mb-3">
-                    <label asp-for="OffreStageId" class="control-label">Offre de stage *</label>
-                    <select asp-for="OffreStageId" class="form-control" asp-items="ViewBag.OffreStageId">
+                    <label class="control-label">Offre de stage *</label>
+                    <select name="OffreStageId" class="form-control" required>
                         <option value="">-- Sélectionnez une offre --</option>
+                        @foreach (var item in ViewBag.OffreStageId as SelectList)
+                        {
+                            <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                        }
                     </select>
-                    <span asp-validation-for="OffreStageId" class="text-danger"></span>
                 </div>
             }
 
-            <!-- Étudiant (caché - géré par le serveur) -->
-            <input type="hidden" asp-for="EtudiantId" />
-
-            <!-- Date de candidature (caché - valeur par défaut = aujourd'hui) -->
+            <!-- Champs cachés -->
             <input type="hidden" name="DateCandidature" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
-
-            <!-- Statut (caché - valeur par défaut = "En attente") -->
             <input type="hidden" name="Statut" value="En attente" />
 
             <!-- Upload CV -->
             <div class="form-group mb-3">
                 <label for="cvFile" class="control-label">Curriculum Vitae (CV)</label>
-                <input type="file"
+                <input type="file" 
                        id="cvFile"
-                       name="cvFile"
-                       class="form-control"
+                       name="cvFile" 
+                       class="form-control" 
                        accept=".pdf,.doc,.docx" />
                 <small class="form-text text-muted">
                     Formats acceptés : PDF, Word (.doc, .docx) • Taille maximale : 5 Mo
                 </small>
             </div>
 
-            <!-- Boutons d'action -->
+            <!-- Boutons -->
             <div class="form-group mt-4">
-                <input type="submit" value="✓ Postuler" class="btn btn-success" />
-                <a asp-action="Index" class="btn btn-secondary">← Retour</a>
+                <button type="submit" class="btn btn-success">Postuler</button>
+                <a href="/Candidatures/Index" class="btn btn-secondary">Retour</a>
             </div>
         </form>
     </div>
 </div>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
