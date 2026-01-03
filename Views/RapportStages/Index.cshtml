@@ -59,7 +59,11 @@
                             <td>@item.Convention.Candidature.Etudiant.Nom @item.Convention.Candidature.Etudiant.Prenom</td>
                         }
                         <td>
-                            <small class="text-muted">Convention #@item.ConventionId</small>
+                            <div>
+                                <strong class="text-muted small">@item.Convention.Candidature.OffreStage.Titre</strong>
+                                <br />
+                                <small class="text-muted">@item.Convention.Candidature.OffreStage.Entreprise.Nom</small>
+                            </div>
                         </td>
                         <td>@item.DateDepot.ToString("dd/MM/yyyy")</td>
                         <td class="text-end">
