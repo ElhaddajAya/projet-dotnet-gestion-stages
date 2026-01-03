@@ -229,17 +229,6 @@ namespace GestionStages.Controllers
             ModelState.Remove("Etudiant");
             ModelState.Remove("OffreStage");
 
-<<<<<<< HEAD
-=======
-            if (!ModelState.IsValid)
-            {
-                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-                {
-                    Console.WriteLine($"  - {error.ErrorMessage}");
-                }
-            }
-
->>>>>>> eb5e3c14eb44d4c2b9393d17f479651b06823e7a
             if (ModelState.IsValid)
             {
                 _context.Add(candidature);

@@ -1,79 +1,110 @@
 ﻿@model GestionStages.Models.OffresStage
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Créer une offre de stage";
 }
 
-<h1>Créer une offre de stage</h1>
-
-<h4>Nouvelle offre</h4>
-<hr />
-
-<!-- Afficher le message de succès -->
-@* @if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
- *@
-<!-- Afficher le message d'erreur -->
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
-
-<!-- Afficher les erreurs de validation -->
-@if (!ViewData.ModelState.IsValid)
-{
-    <div class="alert alert-danger">
-        <h5>Erreurs de validation :</h5>
-        <ul>
-            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-            {
-                <li>@error.ErrorMessage</li>
-            }
-        </ul>
-    </div>
-}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Offres de stage</a></li>
+        <li class="breadcrumb-item active">Nouvelle offre</li>
+    </ol>
+</nav>
 
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Titre" class="control-label"></label>
-                <input asp-for="Titre" class="form-control" />
-                <span asp-validation-for="Titre" class="text-danger"></span>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Créer une nouvelle offre de stage</h5>
             </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DureeMois" class="control-label"></label>
-                <input asp-for="DureeMois" class="form-control" />
-                <span asp-validation-for="DureeMois" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DateDebutSouhaitee" class="control-label"></label>
-                <input asp-for="DateDebutSouhaitee" class="form-control" />
-                <span asp-validation-for="DateDebutSouhaitee" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="EntrepriseId" class="control-label"></label>
-                <select asp-for="EntrepriseId" class ="form-control" asp-items="ViewBag.EntrepriseId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
-</div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <!-- Sélection Entreprise (Admin uniquement) -->
+                        <div class="mb-3">
+                            <label asp-for="EntrepriseId" class="form-label">Entreprise *</label>
+                            <select asp-for="EntrepriseId" class="form-select" asp-items="ViewBag.EntrepriseId">
+                                <option value="">-- Sélectionnez une entreprise --</option>
+                            </select>
+                            <span asp-validation-for="EntrepriseId" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Entreprise cachée (auto-remplie pour Entreprise) -->
+                        var selectedValue = (ViewBag.EntrepriseId as SelectList)?.SelectedValue?.ToString() ?? "";
+                        var entrepriseNom = (ViewBag.EntrepriseId as SelectList)?
+                        .FirstOrDefault(x => x.Value == selectedValue)?.Text ?? "";
+
+                        <div class="mb-3">
+                            <label class="form-label">Entreprise</label>
+                            <input type="text" class="form-control" value="@entrepriseNom" readonly style="background-color: #e9ecef;" />
+                            <input type="hidden" asp-for="EntrepriseId" value="@selectedValue" />
+                        </div>
+                    }
+
+                    <!-- Titre -->
+                    <div class="mb-3">
+                        <label asp-for="Titre" class="form-label">Titre de l'offre *</label>
+                        <input asp-for="Titre" class="form-control" placeholder="Ex: Stage en développement web" />
+                        <span asp-validation-for="Titre" class="text-danger"></span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Description *</label>
+                        <textarea asp-for="Description" class="form-control" rows="5" placeholder="Décrivez les missions, compétences requises, environnement de travail..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <!-- Durée -->
+                    <div class="mb-3">
+                        <label asp-for="DureeMois" class="form-label">Durée (en mois) *</label>
+                        <input asp-for="DureeMois" type="number" class="form-control" min="1" max="12" placeholder="Ex: 3" />
+                        <span asp-validation-for="DureeMois" class="text-danger"></span>
+                        <small class="text-muted">Entre 1 et 12 mois</small>
+                    </div>
+
+                    <!-- Date de début souhaitée -->
+                    <div class="mb-3">
+                        <label asp-for="DateDebutSouhaitee" class="form-label">Date de début souhaitée</label>
+                        <input asp-for="DateDebutSouhaitee" type="date" class="form-control" />
+                        <span asp-validation-for="DateDebutSouhaitee" class="text-danger"></span>
+                        <small class="text-muted">Optionnel - laissez vide si flexible</small>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Créer l'offre</button>
+                        <a asp-action="Index" class="btn btn-secondary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6 class="card-title">💡 Conseils</h6>
+                <ul class="small mb-0">
+                    <li>Rédigez un titre clair et accrocheur</li>
+                    <li>Décrivez précisément les missions</li>
+                    <li>Mentionnez les compétences requises</li>
+                    <li>Indiquez l'environnement de travail</li>
+                    <li>Soyez transparent sur les conditions</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
