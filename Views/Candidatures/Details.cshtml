@@ -10,6 +10,7 @@
         <li class="breadcrumb-item active">Candidature #@Model.Id</li>
     </ol>
 </nav>
+<<<<<<< HEAD
 
 @if (TempData["Success"] != null)
 {
@@ -18,6 +19,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
+=======
+>>>>>>> eb5e3c14eb44d4c2b9393d17f479651b06823e7a
 
 <div class="row">
     <div class="col-lg-8">
@@ -84,6 +87,7 @@
         <div class="d-grid gap-2">
             @if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
             {
+<<<<<<< HEAD
                 @if (Model.Statut == "En attente")
                 {
                     <form asp-action="Accepter" asp-route-id="@Model.Id" method="post" style="display: inline;">
@@ -105,6 +109,13 @@
             @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
             {
                 <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">🗑️ Annuler la candidature</a>
+=======
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">✏️ Modifier le statut</a>
+            }
+            @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
+            {
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">🗑️ Annuler la candidature</a>
+>>>>>>> eb5e3c14eb44d4c2b9393d17f479651b06823e7a
             }
             <a asp-action="Index" class="btn btn-outline-secondary">← Retour à la liste</a>
         </div>

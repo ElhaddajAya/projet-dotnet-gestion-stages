@@ -68,6 +68,13 @@
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
                                 <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info" title="Détails">👁️</a>
+<<<<<<< HEAD
+=======
+                                @if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning" title="Modifier">✏️</a>
+                                }
+>>>>>>> eb5e3c14eb44d4c2b9393d17f479651b06823e7a
                                 @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
                                 {
                                     <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" title="Annuler">🗑️</a>
