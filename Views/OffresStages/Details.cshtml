@@ -4,36 +4,70 @@
     ViewData["Title"] = "Détails de l'offre";
 }
 
-<h1>Détails de l'offre de stage</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Offres</a></li>
+        <li class="breadcrumb-item active">@Model.Titre</li>
+    </ol>
+</nav>
 
-<div>
-    <h4>Informations</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">Titre</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.Titre)</dd>
-
-        <dt class="col-sm-2">Description</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.Description)</dd>
-
-        <dt class="col-sm-2">Durée (mois)</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.DureeMois)</dd>
-
-        <dt class="col-sm-2">Date de début souhaitée</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateDebutSouhaitee)</dd>
-
-        <dt class="col-sm-2">Entreprise</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.Entreprise.Nom)</dd>
-    </dl>
-</div>
-
-<div>
-    <!-- Boutons Edit et Delete - Seulement Admin et Entreprise -->
-    @if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
-    {
-        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Modifier</a>
-        <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger">Supprimer</a>
-    }
-
-    <a asp-action="Index" class="btn btn-secondary">Retour à la liste</a>
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">@Model.Titre</h2>
+                <h5 class="text-muted mb-4">@Model.Entreprise.Nom</h5>
+                <div class="mb-4">
+                    <h6 class="text-uppercase text-muted small mb-2">Description</h6>
+                    <p>@Model.Description</p>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Durée</h6>
+                        <p class="fw-bold">@Model.DureeMois mois</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Date de début souhaitée</h6>
+                        <p class="fw-bold">@(Model.DateDebutSouhaitee?.ToString("dd/MM/yyyy") ?? "Flexible")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @if (User.IsInRole("Etudiant"))
+        {
+            <div class="alert alert-success">
+                <strong>Intéressé(e) par cette offre ?</strong> Préparez votre CV et postulez dès maintenant !
+            </div>
+        }
+    </div>
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="card-title">Informations entreprise</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><strong>Nom :</strong> @Model.Entreprise.Nom</li>
+                    @if (!string.IsNullOrEmpty(Model.Entreprise.Secteur))
+                    {
+                        <li class="mb-2"><strong>Secteur :</strong> @Model.Entreprise.Secteur</li>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Entreprise.Adresse))
+                    {
+                        <li class="mb-2"><strong>Adresse :</strong> @Model.Entreprise.Adresse</li>
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="d-grid gap-2">
+            @if (User.IsInRole("Etudiant"))
+            {
+                <a asp-controller="Candidatures" asp-action="Create" asp-route-offreId="@Model.Id" class="btn btn-success btn-lg">Postuler à cette offre</a>
+            }
+            @if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">✏️ Modifier</a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">🗑️ Supprimer</a>
+            }
+            <a asp-action="Index" class="btn btn-outline-secondary">← Retour aux offres</a>
+        </div>
+    </div>
 </div>

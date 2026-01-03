@@ -1,8 +1,170 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Accueil";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@if (!User.Identity.IsAuthenticated)
+{
+    <div class="text-center py-5">
+        <h1 class="display-4 mb-4">Plateforme de Gestion des Stages</h1>
+        <p class="lead text-muted mb-5">Connectez étudiants et entreprises pour des opportunités de stage enrichissantes</p>
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Pour les Étudiants</h5>
+                        <p class="card-text">Recherchez et postulez aux offres de stage qui correspondent à votre profil</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Pour les Entreprises</h5>
+                        <p class="card-text">Publiez vos offres de stage et gérez les candidatures reçues</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Gestion Simplifiée</h5>
+                        <p class="card-text">Suivez vos conventions et rapports de stage en toute simplicité</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-primary btn-lg me-3">S'inscrire</a>
+            <a asp-controller="OffresStages" asp-action="Index" class="btn btn-outline-primary btn-lg">Voir les offres</a>
+        </div>
+    </div>
+}
+else if (User.IsInRole("Admin"))
+{
+    <h1 class="mb-4">Tableau de bord Administrateur</h1>
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Étudiants</h5>
+                    <p class="card-text display-6">@ViewBag.NbEtudiants</p>
+                    <a asp-controller="Etudiants" asp-action="Index" class="btn btn-light btn-sm">Gérer</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Entreprises</h5>
+                    <p class="card-text display-6">@ViewBag.NbEntreprises</p>
+                    <a asp-controller="Entreprises" asp-action="Index" class="btn btn-light btn-sm">Gérer</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Offres</h5>
+                    <p class="card-text display-6">@ViewBag.NbOffres</p>
+                    <a asp-controller="OffresStages" asp-action="Index" class="btn btn-light btn-sm">Gérer</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Candidatures</h5>
+                    <p class="card-text display-6">@ViewBag.NbCandidatures</p>
+                    <a asp-controller="Candidatures" asp-action="Index" class="btn btn-light btn-sm">Gérer</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mt-5">
+        <h4>Actions rapides</h4>
+        <div class="list-group">
+            <a asp-controller="Conventions" asp-action="Index" class="list-group-item list-group-item-action">Gérer les conventions</a>
+            <a asp-controller="RapportStages" asp-action="Index" class="list-group-item list-group-item-action">Gérer les rapports de stage</a>
+        </div>
+    </div>
+}
+else if (User.IsInRole("Etudiant"))
+{
+    <h1 class="mb-4">Bonjour, @ViewBag.NomComplet</h1>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Mes candidatures</h5>
+                    <p class="card-text display-6">@ViewBag.NbCandidatures</p>
+                    <a asp-controller="Candidatures" asp-action="Index" class="btn btn-primary">Voir tout</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">En attente</h5>
+                    <p class="card-text display-6 text-warning">@ViewBag.NbEnAttente</p>
+                    <small class="text-muted">Réponse en cours</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Acceptées</h5>
+                    <p class="card-text display-6 text-success">@ViewBag.NbAcceptees</p>
+                    <small class="text-muted">Félicitations !</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <strong>Conseil :</strong> Consultez régulièrement les nouvelles offres de stage et préparez un CV à jour.
+    </div>
+    <div class="d-grid gap-2 d-md-flex">
+        <a asp-controller="OffresStages" asp-action="Index" class="btn btn-primary btn-lg">Parcourir les offres</a>
+        <a asp-controller="Etudiants" asp-action="Index" class="btn btn-outline-secondary btn-lg">Compléter mon profil</a>
+    </div>
+}
+else if (User.IsInRole("Entreprise"))
+{
+    <h1 class="mb-4">Espace Entreprise - @ViewBag.NomEntreprise</h1>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Mes offres</h5>
+                    <p class="card-text display-6">@ViewBag.NbOffres</p>
+                    <a asp-controller="OffresStages" asp-action="Create" class="btn btn-success">Créer une offre</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Candidatures reçues</h5>
+                    <p class="card-text display-6 text-info">@ViewBag.NbCandidatures</p>
+                    <a asp-controller="Candidatures" asp-action="Index" class="btn btn-primary">Consulter</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Nouvelles candidatures</h5>
+                    <p class="card-text display-6 text-warning">@ViewBag.NbNouvelles</p>
+                    <small class="text-muted">À traiter</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="alert alert-success">
+        <strong>Astuce :</strong> Répondez rapidement aux candidatures pour attirer les meilleurs talents !
+    </div>
+    <div class="d-grid gap-2 d-md-flex">
+        <a asp-controller="OffresStages" asp-action="Index" class="btn btn-primary btn-lg">Gérer mes offres</a>
+        <a asp-controller="Entreprises" asp-action="Index" class="btn btn-outline-secondary btn-lg">Mon profil</a>
+    </div>
+}

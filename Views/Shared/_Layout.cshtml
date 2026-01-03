@@ -1,92 +1,86 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="fr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - GestionStages</title>
+    <title>@ViewData["Title"] - Gestion des Stages</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/GestionStages.styles.css" asp-append-version="true" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm fixed-top">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">GestionStages</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
+                    Gestion Stages
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        @if(User.IsInRole("Admin"))
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        @if (User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Etudiants" asp-action="Index">Etudiants</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Entreprises" asp-action="Index">Entreprise</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="OffresStages" asp-action="Index">Offres</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Candidatures" asp-action="Index">Candidatures</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Conventions" asp-action="Index">Conventions</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="RapportStages" asp-action="Index">Rapports</a>
-                            </li>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="Etudiants" asp-action="Index">Étudiants</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Entreprises" asp-action="Index">Entreprises</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="OffresStages" asp-action="Index">Offres</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Candidatures" asp-action="Index">Candidatures</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Conventions" asp-action="Index">Conventions</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="RapportStages" asp-action="Index">Rapports</a></li>
+                            }
+                            @if (User.IsInRole("Etudiant"))
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="OffresStages" asp-action="Index">Offres disponibles</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Candidatures" asp-action="Index">Mes candidatures</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="RapportStages" asp-action="Index">Mes rapports</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Etudiants" asp-action="Index">Mon profil</a></li>
+                            }
+                            @if (User.IsInRole("Entreprise"))
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="OffresStages" asp-action="Index">Mes offres</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Candidatures" asp-action="Index">Candidatures reçues</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Entreprises" asp-action="Index">Mon profil</a></li>
+                            }
                         }
-                        else if(User.IsInRole("Etudiant"))
+                        else
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="OffresStages" asp-action="Index">Offres</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Candidatures" asp-action="Index">Mes Candidatures</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="RapportStages" asp-action="Index">Mon Rapport</a>
-                            </li>
-                        }
-                        else if(User.IsInRole("Entreprise"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="OffresStages" asp-action="Index">Mes Offres</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Candidatures" asp-action="Index">Candidatures Reçues</a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="OffresStages" asp-action="Index">Offres de stage</a></li>
                         }
                     </ul>
                     <ul class="navbar-nav">
-                        <partial name="_LoginPartial" />
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    @User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <form class="dropdown-item" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home")" method="post">
+                                            <button type="submit" class="btn btn-link text-decoration-none text-dark p-0">Déconnexion</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Connexion</a></li>
+                            <li class="nav-item"><a class="nav-link btn btn-outline-light ms-2" asp-area="Identity" asp-page="/Account/Register">S'inscrire</a></li>
+                        }
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - GestionStages - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <main class="container my-4">
+        @RenderBody()
+    </main>
+    <footer class="bg-light py-3 mt-5">
+        <div class="container text-center text-muted">
+            <small>&copy; 2026 - Gestion des Stages</small>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

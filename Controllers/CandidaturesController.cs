@@ -138,15 +138,6 @@ namespace GestionStages.Controllers
         [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Create([Bind("Id,DateCandidature,Statut,EtudiantId,OffreStageId,CheminCV")] Candidature candidature, IFormFile? cvFile)
         {
-            // DEBUG: Afficher les valeurs reçues
-            Console.WriteLine("========== DEBUG CREATE CANDIDATURE ==========");
-            Console.WriteLine($"EtudiantId reçu: {candidature.EtudiantId}");
-            Console.WriteLine($"OffreStageId reçu: {candidature.OffreStageId}");
-            Console.WriteLine($"DateCandidature reçu: {candidature.DateCandidature}");
-            Console.WriteLine($"Statut reçu: {candidature.Statut}");
-            Console.WriteLine($"CheminCV AVANT upload: {candidature.CheminCV}");
-            Console.WriteLine($"Fichier CV reçu: {cvFile?.FileName ?? "AUCUN"}");
-
             if (User.IsInRole("Etudiant"))
             {
                 var userEmail = User.Identity.Name;
@@ -195,38 +186,18 @@ namespace GestionStages.Controllers
             ModelState.Remove("Etudiant");
             ModelState.Remove("OffreStage");
 
-            // DEBUG: Afficher l'état du ModelState
-            Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
             if (!ModelState.IsValid)
             {
-                Console.WriteLine("ERREURS DE VALIDATION:");
                 foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
                 {
                     Console.WriteLine($"  - {error.ErrorMessage}");
                 }
             }
 
-            // DEBUG: Afficher les valeurs JUSTE AVANT l'insertion
-            Console.WriteLine("========== VALEURS AVANT INSERT ==========");
-            Console.WriteLine($"candidature.Id: {candidature.Id}");
-            Console.WriteLine($"candidature.EtudiantId: {candidature.EtudiantId}");
-            Console.WriteLine($"candidature.OffreStageId: {candidature.OffreStageId}");
-            Console.WriteLine($"candidature.DateCandidature: {candidature.DateCandidature}");
-            Console.WriteLine($"candidature.Statut: {candidature.Statut}");
-            Console.WriteLine($"candidature.CheminCV: {candidature.CheminCV ?? "NULL"}");
-            Console.WriteLine("==========================================");
-
             if (ModelState.IsValid)
             {
                 _context.Add(candidature);
                 await _context.SaveChangesAsync();
-
-                // DEBUG: Vérifier après sauvegarde
-                var candidatureSaved = await _context.Candidatures.FindAsync(candidature.Id);
-                Console.WriteLine("========== APRÈS SAUVEGARDE ==========");
-                Console.WriteLine($"ID créé: {candidatureSaved?.Id}");
-                Console.WriteLine($"CheminCV dans BDD: {candidatureSaved?.CheminCV ?? "NULL"}");
-                Console.WriteLine("======================================");
 
                 TempData["Success"] = "Candidature créée avec succès !";
                 return RedirectToAction(nameof(Index));

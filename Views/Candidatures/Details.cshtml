@@ -4,96 +4,85 @@
     ViewData["Title"] = "Détails de la candidature";
 }
 
-<h1>Détails de la candidature</h1>
-
-<hr />
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Candidatures</a></li>
+        <li class="breadcrumb-item active">Candidature #@Model.Id</li>
+    </ol>
+</nav>
 
 <div class="row">
-    <div class="col-md-8">
-        <dl class="row">
-            <dt class="col-sm-4">Étudiant</dt>
-            <dd class="col-sm-8">
-                @Html.DisplayFor(model => model.Etudiant.Nom) @Html.DisplayFor(model => model.Etudiant.Prenom)
-            </dd>
-
-            <dt class="col-sm-4">Email</dt>
-            <dd class="col-sm-8">
-                @Html.DisplayFor(model => model.Etudiant.Email)
-            </dd>
-
-            <dt class="col-sm-4">Offre de stage</dt>
-            <dd class="col-sm-8">
-                <strong>@Html.DisplayFor(model => model.OffreStage.Titre)</strong>
-            </dd>
-
-            <dt class="col-sm-4">Entreprise</dt>
-            <dd class="col-sm-8">
-                @Html.DisplayFor(model => model.OffreStage.Entreprise.Nom)
-            </dd>
-
-            <dt class="col-sm-4">Date de candidature</dt>
-            <dd class="col-sm-8">
-                @Model.DateCandidature.ToString("dd/MM/yyyy")
-            </dd>
-
-            <dt class="col-sm-4">Statut</dt>
-            <dd class="col-sm-8">
-                @if (Model.Statut == "Acceptée")
-                {
-                    <span class="badge bg-success fs-6">✓ @Model.Statut</span>
-                }
-                else if (Model.Statut == "Refusée")
-                {
-                    <span class="badge bg-danger fs-6">✗ @Model.Statut</span>
-                }
-                else
-                {
-                    <span class="badge bg-warning text-dark fs-6">⏳@Model.Statut</span>
-                }
-            </dd>
-
-            <dt class="col-sm-4">Curriculum Vitae</dt>
-            <dd class="col-sm-8">
-                @if (!string.IsNullOrEmpty(Model.CheminCV))
-                {
-                    <a href="@Model.CheminCV" target="_blank" class="btn btn-primary">
-                        Télécharger le CV
-                    </a>
-                }
-                else
-                {
-                    <em class="text-muted">Aucun CV téléversé</em>
-                }
-            </dd>
-        </dl>
-
-        <!-- Description de l'offre -->
-        <div class="card mt-4">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">Description de l'offre</h5>
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informations de la candidature</h5>
             </div>
             <div class="card-body">
-                <p>@Html.DisplayFor(model => model.OffreStage.Description)</p>
-                <p>
-                    <strong>Durée :</strong> @Html.DisplayFor(model => model.OffreStage.DureeMois) mois<br />
-                    <strong>Date de début souhaitée :</strong> @(Model.OffreStage.DateDebutSouhaitee?.ToString("dd/MM/yyyy") ?? "Non spécifiée")
-                </p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Étudiant</h6>
+                        <p class="fw-bold">@Model.Etudiant.Nom @Model.Etudiant.Prenom</p>
+                        <p class="small text-muted mb-0">@Model.Etudiant.Email</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Statut</h6>
+                        @if (Model.Statut == "Acceptée")
+                        {
+                            <span class="badge bg-success fs-6">✓ @Model.Statut</span>
+                        }
+                        else if (Model.Statut == "Refusée")
+                        {
+                            <span class="badge bg-danger fs-6">✗ @Model.Statut</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark fs-6">⏳ @Model.Statut</span>
+                        }
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Date de candidature</h6>
+                        <p>@Model.DateCandidature.ToString("dd/MM/yyyy")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Curriculum Vitae</h6>
+                        @if (!string.IsNullOrEmpty(Model.CheminCV))
+                        {
+                            <a href="@Model.CheminCV" target="_blank" class="btn btn-outline-primary btn-sm">📄 Télécharger le CV</a>
+                        }
+                        else
+                        {
+                            <p class="text-muted small">Aucun CV téléversé</p>
+                        }
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Boutons d'action -->
-        <div class="mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Détails de l'offre</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="card-title">@Model.OffreStage.Titre</h6>
+                <p class="text-muted">@Model.OffreStage.Entreprise.Nom</p>
+                <p>@Model.OffreStage.Description</p>
+                <ul class="list-unstyled small">
+                    <li><strong>Durée :</strong> @Model.OffreStage.DureeMois mois</li>
+                    <li><strong>Date de début :</strong> @(Model.OffreStage.DateDebutSouhaitee?.ToString("dd/MM/yyyy") ?? "Non spécifiée")</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="d-grid gap-2">
             @if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
             {
-                <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">✏️ Modifier</a>
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">✏️ Modifier le statut</a>
             }
-
             @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
             {
-                <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger">🗑️ Annuler</a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">🗑️ Annuler la candidature</a>
             }
-
-            <a asp-action="Index" class="btn btn-secondary">← Retour à la liste</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">← Retour à la liste</a>
         </div>
     </div>
 </div>
