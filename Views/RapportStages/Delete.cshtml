@@ -1,45 +1,81 @@
 ﻿@model GestionStages.Models.RapportStage
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Supprimer le rapport";
 }
 
-<h1>Delete</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Rapports</a></li>
+        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Titre</a></li>
+        <li class="breadcrumb-item active">Supprimer</li>
+    </ol>
+</nav>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>RapportStage</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Titre)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Titre)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.NomFichier)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.NomFichier)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateDepot)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateDepot)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Convention)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Convention.Id)
-        </dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">⚠️ Confirmer la suppression</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <strong>Attention !</strong> Vous êtes sur le point de supprimer ce rapport de stage. Cette action est <strong>irréversible</strong>.
+                </div>
+
+                <h6 class="mb-3">Détails du rapport à supprimer :</h6>
+
+                <dl class="row">
+                    <dt class="col-sm-4">Titre</dt>
+                    <dd class="col-sm-8"><strong>@Model.Titre</strong></dd>
+
+                    <dt class="col-sm-4">Étudiant</dt>
+                    <dd class="col-sm-8">@Model.Convention.Candidature.Etudiant.Nom @Model.Convention.Candidature.Etudiant.Prenom</dd>
+
+                    <dt class="col-sm-4">Convention</dt>
+                    <dd class="col-sm-8">Convention #@Model.ConventionId</dd>
+
+                    <dt class="col-sm-4">Date de dépôt</dt>
+                    <dd class="col-sm-8">@Model.DateDepot.ToString("dd/MM/yyyy")</dd>
+
+                    <dt class="col-sm-4">Fichier</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.NomFichier))
+                        {
+                            <span class="badge bg-success">📄 @Model.NomFichier</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Aucun fichier</span>
+                        }
+                    </dd>
+                </dl>
+
+                <hr />
+
+                <form asp-action="Delete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            🗑️ Oui, supprimer définitivement
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-3">
+            <h6>💡 Que se passe-t-il après la suppression ?</h6>
+            <ul class="small mb-0">
+                <li>Le rapport est supprimé de la base de données</li>
+                <li>La convention associée reste conservée</li>
+                <li>Si un fichier PDF existe, pensez à le supprimer manuellement du serveur</li>
+            </ul>
+        </div>
+    </div>
 </div>

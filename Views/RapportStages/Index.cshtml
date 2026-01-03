@@ -1,77 +1,95 @@
 ﻿@model IEnumerable<GestionStages.Models.RapportStage>
 
 @{
-    ViewData["Title"] = "Rapports de stage";
+    ViewData["Title"] = User.IsInRole("Admin") ? "Rapports de stage" : "Mes rapports de stage";
 }
 
-<h1>Rapports de stage</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>@ViewData["Title"]</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Créer un rapport</a>
+</div>
 
-<!-- Messages TempData -->
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        ✅ @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        ❌ @TempData["Error"]
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
 @if (TempData["Warning"] != null)
 {
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        ⚠️ @TempData["Warning"]
+    <div class="alert alert-warning alert-dismissible fade show">
+        @TempData["Warning"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
-<!-- Bouton Create - Admin et Etudiant seulement -->
-@if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
+@if (Model != null && Model.Any())
 {
-    <p>
-        <a asp-action="Create" class="btn btn-primary">Créer un rapport de stage</a>
-    </p>
-}
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>Titre</th>
-            <th>Nom du fichier</th>
-            <th>Date de dépôt</th>
-            <th>Convention</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@Html.DisplayFor(modelItem => item.Titre)</td>
-                <td>@Html.DisplayFor(modelItem => item.NomFichier)</td>
-                <td>@Html.DisplayFor(modelItem => item.DateDepot)</td>
-                <td>Convention #@Html.DisplayFor(modelItem => item.Convention.Id)</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Détails</a>
-
-                    @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
-                    {
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Modifier</a>
-                    }
-
-                    <!-- Bouton Delete - Seulement Admin -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Titre</th>
                     @if (User.IsInRole("Admin"))
                     {
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Supprimer</a>
+                        <th>Étudiant</th>
                     }
-                </td>
-            </tr>
+                    <th>Convention</th>
+                    <th>Date de dépôt</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@item.Titre</strong>
+                            @if (!string.IsNullOrEmpty(item.NomFichier))
+                            {
+                                <br />
+                    
+                                <small class="text-success">✓ PDF déposé</small>
+                            }
+                        </td>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <td>@item.Convention.Candidature.Etudiant.Nom @item.Convention.Candidature.Etudiant.Prenom</td>
+                        }
+                        <td>
+                            <small class="text-muted">Convention #@item.ConventionId</small>
+                        </td>
+                        <td>@item.DateDepot.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info" title="Détails">👁️</a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning" title="Modifier">✏️</a>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" title="Supprimer">🗑️</a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info text-center">
+        @if (User.IsInRole("Etudiant"))
+        {
+            <p class="mb-0">Vous n'avez pas encore soumis de rapport de stage.</p>
+            <p class="small text-muted">Vous devez d'abord avoir une convention de stage active.</p>
         }
-    </tbody>
-</table>
+        else
+        {
+            <p class="mb-0">Aucun rapport de stage enregistré.</p>
+        }
+        <a asp-action="Create" class="btn btn-primary mt-3">+ Créer le premier rapport</a>
+    </div>
+}

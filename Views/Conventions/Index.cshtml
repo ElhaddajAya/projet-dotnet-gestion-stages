@@ -1,80 +1,83 @@
 ﻿@model IEnumerable<GestionStages.Models.Convention>
 
 @{
-    ViewData["Title"] = "Conventions";
+    ViewData["Title"] = "Conventions de stage";
 }
 
-<h1>Conventions</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Conventions de stage</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Créer une convention</a>
+</div>
 
-<!-- Messages TempData -->
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        ✅ @TempData["Success"]
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
-@if (TempData["Error"] != null)
+@if (Model != null && Model.Any())
 {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        ❌ @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Étudiant</th>
+                    <th>Offre de stage</th>
+                    <th>Entreprise</th>
+                    <th>Date début</th>
+                    <th>Date fin</th>
+                    <th>Statut</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@item.Candidature.Etudiant.Nom @item.Candidature.Etudiant.Prenom</strong>
+                        </td>
+                        <td>@item.Candidature.OffreStage.Titre</td>
+                        <td>@item.Candidature.OffreStage.Entreprise.Nom</td>
+                        <td>@item.DateDebut.ToString("dd/MM/yyyy")</td>
+                        <td>@item.DateFin.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (item.Statut == "En cours")
+                            {
+                                <span class="badge bg-primary">🔄 @item.Statut</span>
+                            }
+                            else if (item.Statut == "Terminée")
+                            {
+                                <span class="badge bg-success">✓ @item.Statut</span>
+                            }
+                            else if (item.Statut == "Signée")
+                            {
+                                <span class="badge bg-info">📝 @item.Statut</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@item.Statut</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info" title="Détails">👁️</a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning" title="Modifier">✏️</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" title="Supprimer">🗑️</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 }
-
-@if (TempData["Warning"] != null)
+else
 {
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        ⚠️ @TempData["Warning"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="alert alert-info text-center">
+        <p class="mb-0">Aucune convention de stage enregistrée.</p>
+        <a asp-action="Create" class="btn btn-primary mt-3">+ Créer la première convention</a>
     </div>
 }
-
-<!-- Bouton Create - Admin only (pas besoin de vérification car le contrôleur est déjà [Authorize(Roles = "Admin")]) -->
-<p>
-    <a asp-action="Create" class="btn btn-primary">Créer une nouvelle convention</a>
-</p>
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>Date de signature</th>
-            <th>Date de début</th>
-            <th>Date de fin</th>
-            <th>Statut</th>
-            <th>Candidature</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.DateSignature.ToString("dd/MM/yyyy")</td>
-                <td>@item.DateDebut.ToString("dd/MM/yyyy")</td>
-                <td>@item.DateFin.ToString("dd/MM/yyyy")</td>
-                <td>
-                    @if (item.Statut == "En cours")
-                    {
-                        <span class="badge bg-primary">@item.Statut</span>
-                    }
-                    else if (item.Statut == "Terminée")
-                    {
-                        <span class="badge bg-success">@item.Statut</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary">@item.Statut</span>
-                    }
-                </td>
-                <td>Candidature #@item.Candidature.Id</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Détails</a>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Modifier</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Supprimer</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>

@@ -1,49 +1,126 @@
 ﻿@model GestionStages.Models.RapportStage
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Modifier le rapport";
 }
 
-<h1>Edit</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Rapports</a></li>
+        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Titre</a></li>
+        <li class="breadcrumb-item active">Modifier</li>
+    </ol>
+</nav>
 
-<h4>RapportStage</h4>
-<hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Titre" class="control-label"></label>
-                <input asp-for="Titre" class="form-control" />
-                <span asp-validation-for="Titre" class="text-danger"></span>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Modifier : @Model.Titre</h5>
             </div>
-            <div class="form-group">
-                <label asp-for="NomFichier" class="control-label"></label>
-                <input asp-for="NomFichier" class="form-control" />
-                <span asp-validation-for="NomFichier" class="text-danger"></span>
+            <div class="card-body">
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="NomFichier" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <!-- Convention -->
+                    <div class="mb-3">
+                        <label asp-for="ConventionId" class="form-label">Convention de stage *</label>
+                        <select asp-for="ConventionId" class="form-select" asp-items="ViewBag.ConventionId">
+                            <option value="">-- Sélectionnez une convention --</option>
+                        </select>
+                        <span asp-validation-for="ConventionId" class="text-danger"></span>
+                    </div>
+
+                    <!-- Titre -->
+                    <div class="mb-3">
+                        <label asp-for="Titre" class="form-label">Titre du rapport *</label>
+                        <input asp-for="Titre" class="form-control" />
+                        <span asp-validation-for="Titre" class="text-danger"></span>
+                    </div>
+
+                    <!-- Fichier actuel -->
+                    @if (!string.IsNullOrEmpty(Model.NomFichier))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Fichier actuel</label>
+                            <div class="alert alert-info mb-2">
+                                <small>
+                                    📄 <strong>@System.IO.Path.GetFileName(Model.NomFichier)</strong>
+                                    <br />
+                                    <a href="@Model.NomFichier" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Télécharger le fichier actuel</a>
+                                </small>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Upload nouveau fichier PDF -->
+                    <div class="mb-3">
+                        <label for="pdfFile" class="form-label">
+                            @if (!string.IsNullOrEmpty(Model.NomFichier))
+                            {
+                                <text>Remplacer le fichier PDF (optionnel)</text>
+                            }
+                            else
+                            {
+                                <text>Fichier PDF du rapport</text>
+                            }
+                        </label>
+                        <input type="file" id="pdfFile" name="pdfFile" class="form-control" accept=".pdf" />
+                        <small class="text-muted">
+                            @if (!string.IsNullOrEmpty(Model.NomFichier))
+                            {
+                                <text>Laissez vide pour conserver le fichier actuel</text>
+                            }
+                            else
+                            {
+                                <text>Formats acceptés : PDF uniquement (max 10 Mo)</text>
+                            }
+                        </small>
+                    </div>
+
+                    <!-- Date de dépôt -->
+                    <div class="mb-3">
+                        <label asp-for="DateDepot" class="form-label">Date de dépôt *</label>
+                        <input asp-for="DateDepot" type="date" class="form-control" />
+                        <span asp-validation-for="DateDepot" class="text-danger"></span>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-warning">Enregistrer les modifications</button>
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">Annuler</a>
+                    </div>
+                </form>
             </div>
-            <div class="form-group">
-                <label asp-for="DateDepot" class="control-label"></label>
-                <input asp-for="DateDepot" class="form-control" />
-                <span asp-validation-for="DateDepot" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="alert alert-info">
+            <h6>ℹ️ Information</h6>
+            <p class="small mb-0">Vous pouvez modifier le titre et remplacer le fichier PDF si nécessaire.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Actions rapides</h6>
+                <div class="d-grid gap-2">
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">👁️ Voir les détails</a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">🗑️ Supprimer</a>
+                    }
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="ConventionId" class="control-label"></label>
-                <select asp-for="ConventionId" class="form-control" asp-items="ViewBag.ConventionId"></select>
-                <span asp-validation-for="ConventionId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

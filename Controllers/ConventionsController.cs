@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace GestionStages.Controllers
 {
-    [Authorize(Roles = "Admin")] // Seul l'Admin a accès à tout
+    [Authorize(Roles = "Admin")]
     public class ConventionsController : Controller
     {
         private readonly StagesDbContext _context;
@@ -23,41 +23,47 @@ namespace GestionStages.Controllers
         // GET: Conventions
         public async Task<IActionResult> Index()
         {
-            var stagesDbContext = _context.Conventions.Include(c => c.Candidature);
-            return View(await stagesDbContext.ToListAsync());
+            var conventions = _context.Conventions
+                .Include(c => c.Candidature)
+                    .ThenInclude(cand => cand.Etudiant)
+                .Include(c => c.Candidature)
+                    .ThenInclude(cand => cand.OffreStage)
+                        .ThenInclude(o => o.Entreprise);
+
+            return View(await conventions.ToListAsync());
         }
 
         // GET: Conventions/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var convention = await _context.Conventions
                 .Include(c => c.Candidature)
+                    .ThenInclude(cand => cand.Etudiant)
+                .Include(c => c.Candidature)
+                    .ThenInclude(cand => cand.OffreStage)
+                        .ThenInclude(o => o.Entreprise)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (convention == null)
-            {
-                return NotFound();
-            }
+
+            if (convention == null) return NotFound();
 
             return View(convention);
         }
 
         // GET: Conventions/Create
-        public async Task<IActionResult> Create() // ✅ Ajout de async
+        public async Task<IActionResult> Create()
         {
-            var candidatures = await _context.Candidatures // ✅ Ajout de await
+            var candidatures = await _context.Candidatures
                 .Include(c => c.Etudiant)
                 .Include(c => c.OffreStage)
+                .Where(c => c.Statut == "Acceptée")
                 .Select(c => new
                 {
                     c.Id,
                     Display = c.Etudiant.Nom + " " + c.Etudiant.Prenom + " - " + c.OffreStage.Titre
                 })
-                .ToListAsync(); // ToListAsync au lieu de ToList
+                .ToListAsync();
 
             ViewData["CandidatureId"] = new SelectList(candidatures, "Id", "Display");
             return View();
@@ -68,7 +74,6 @@ namespace GestionStages.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,DateSignature,DateDebut,DateFin,Statut,CandidatureId")] Convention convention)
         {
-            // Retirer la navigation de la validation
             ModelState.Remove("Candidature");
             ModelState.Remove("Rapport");
 
@@ -83,6 +88,7 @@ namespace GestionStages.Controllers
             var candidatures = await _context.Candidatures
                 .Include(c => c.Etudiant)
                 .Include(c => c.OffreStage)
+                .Where(c => c.Statut == "Acceptée")
                 .Select(c => new
                 {
                     c.Id,
@@ -97,16 +103,10 @@ namespace GestionStages.Controllers
         // GET: Conventions/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var convention = await _context.Conventions.FindAsync(id);
-            if (convention == null)
-            {
-                return NotFound();
-            }
+            if (convention == null) return NotFound();
 
             var candidatures = await _context.Candidatures
                 .Include(c => c.Etudiant)
@@ -127,12 +127,8 @@ namespace GestionStages.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,DateSignature,DateDebut,DateFin,Statut,CandidatureId")] Convention convention)
         {
-            if (id != convention.Id)
-            {
-                return NotFound();
-            }
+            if (id != convention.Id) return NotFound();
 
-            // Retirer la navigation de la validation
             ModelState.Remove("Candidature");
             ModelState.Remove("Rapport");
 
@@ -147,13 +143,9 @@ namespace GestionStages.Controllers
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!ConventionExists(convention.Id))
-                    {
                         return NotFound();
-                    }
                     else
-                    {
                         throw;
-                    }
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -175,18 +167,16 @@ namespace GestionStages.Controllers
         // GET: Conventions/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var convention = await _context.Conventions
                 .Include(c => c.Candidature)
+                    .ThenInclude(cand => cand.Etudiant)
+                .Include(c => c.Candidature)
+                    .ThenInclude(cand => cand.OffreStage)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (convention == null)
-            {
-                return NotFound();
-            }
+
+            if (convention == null) return NotFound();
 
             return View(convention);
         }

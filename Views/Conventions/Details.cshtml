@@ -4,32 +4,100 @@
     ViewData["Title"] = "Détails de la convention";
 }
 
-<h1>Détails de la convention</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Conventions</a></li>
+        <li class="breadcrumb-item active">Convention #@Model.Id</li>
+    </ol>
+</nav>
 
-<div>
-    <h4>Informations</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">Date de signature</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateSignature)</dd>
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📋 Convention de stage</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Étudiant</h6>
+                        <p><strong>@Model.Candidature.Etudiant.Nom @Model.Candidature.Etudiant.Prenom</strong></p>
+                        <p class="small text-muted mb-0">@Model.Candidature.Etudiant.Email</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Statut</h6>
+                        @if (Model.Statut == "En cours")
+                        {
+                            <span class="badge bg-primary fs-6">🔄 @Model.Statut</span>
+                        }
+                        else if (Model.Statut == "Terminée")
+                        {
+                            <span class="badge bg-success fs-6">✓ @Model.Statut</span>
+                        }
+                        else if (Model.Statut == "Signée")
+                        {
+                            <span class="badge bg-info fs-6">📝 @Model.Statut</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary fs-6">@Model.Statut</span>
+                        }
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-uppercase text-muted small mb-2">Date de signature</h6>
+                        <p>@Model.DateSignature.ToString("dd/MM/yyyy")</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-uppercase text-muted small mb-2">Date de début</h6>
+                        <p>@Model.DateDebut.ToString("dd/MM/yyyy")</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-uppercase text-muted small mb-2">Date de fin</h6>
+                        <p>@Model.DateFin.ToString("dd/MM/yyyy")</p>
+                    </div>
+                    <div class="col-12">
+                        <h6 class="text-uppercase text-muted small mb-2">Durée du stage</h6>
+                        <p>@((Model.DateFin - Model.DateDebut).Days) jours (@(Math.Round((Model.DateFin - Model.DateDebut).Days / 30.0, 1)) mois)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <dt class="col-sm-2">Date de début</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateDebut)</dd>
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">🏢 Détails de l'offre de stage</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Titre</dt>
+                    <dd class="col-sm-9"><strong>@Model.Candidature.OffreStage.Titre</strong></dd>
 
-        <dt class="col-sm-2">Date de fin</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateFin)</dd>
+                    <dt class="col-sm-3">Entreprise</dt>
+                    <dd class="col-sm-9">@Model.Candidature.OffreStage.Entreprise.Nom</dd>
 
-        <dt class="col-sm-2">Statut</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.Statut)</dd>
+                    <dt class="col-sm-3">Description</dt>
+                    <dd class="col-sm-9">@Model.Candidature.OffreStage.Description</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
 
-        <dt class="col-sm-2">Candidature</dt>
-        <dd class="col-sm-10">Candidature #@Html.DisplayFor(model => model.Candidature.Id)</dd>
-    </dl>
-</div>
+    <div class="col-lg-4">
+        <div class="d-grid gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">✏️ Modifier</a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">🗑️ Supprimer</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">← Retour à la liste</a>
+        </div>
 
-<div>
-    <!-- Tous les boutons - Seulement Admin car les conventions sont Admin-only -->
-    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Modifier</a>
-    <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger">Supprimer</a>
-    <a asp-action="Index" class="btn btn-secondary">Retour à la liste</a>
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="card-title">Actions rapides</h6>
+                <div class="d-grid gap-2">
+                    <a asp-controller="Candidatures" asp-action="Details" asp-route-id="@Model.CandidatureId" class="btn btn-outline-info btn-sm">📝 Voir la candidature</a>
+                    <a asp-controller="Etudiants" asp-action="Details" asp-route-id="@Model.Candidature.EtudiantId" class="btn btn-outline-primary btn-sm">👤 Profil étudiant</a>
+                    <a asp-controller="OffresStages" asp-action="Details" asp-route-id="@Model.Candidature.OffreStageId" class="btn btn-outline-success btn-sm">💼 Détails offre</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

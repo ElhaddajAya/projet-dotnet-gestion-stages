@@ -4,38 +4,132 @@
     ViewData["Title"] = "Détails du rapport";
 }
 
-<h1>Détails du rapport de stage</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Rapports</a></li>
+        <li class="breadcrumb-item active">@Model.Titre</li>
+    </ol>
+</nav>
 
-<div>
-    <h4>Informations</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">Titre</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.Titre)</dd>
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">📄 @Model.Titre</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Étudiant</h6>
+                        <p><strong>@Model.Convention.Candidature.Etudiant.Nom @Model.Convention.Candidature.Etudiant.Prenom</strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Date de dépôt</h6>
+                        <p>@Model.DateDepot.ToString("dd/MM/yyyy à HH:mm")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Convention liée</h6>
+                        <p>
+                            <a asp-controller="Conventions" asp-action="Details" asp-route-id="@Model.ConventionId">
+                                Convention #@Model.ConventionId
+                            </a>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small mb-2">Fichier PDF</h6>
+                        @if (!string.IsNullOrEmpty(Model.NomFichier))
+                        {
+                            <p>
+                                <a href="@Model.NomFichier" target="_blank" class="btn btn-success btn-sm">
+                                    📄 Télécharger le rapport
+                                </a>
+                            </p>
+                        }
+                        else
+                        {
+                            <p><span class="badge bg-secondary">Aucun fichier attaché</span></p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <dt class="col-sm-2">Nom du fichier</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.NomFichier)</dd>
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">📋 Informations de la convention</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Offre de stage</dt>
+                    <dd class="col-sm-8">@Model.Convention.Candidature.OffreStage.Titre</dd>
 
-        <dt class="col-sm-2">Date de dépôt</dt>
-        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateDepot)</dd>
+                    <dt class="col-sm-4">Entreprise</dt>
+                    <dd class="col-sm-8">@Model.Convention.Candidature.OffreStage.Entreprise.Nom</dd>
 
-        <dt class="col-sm-2">Convention</dt>
-        <dd class="col-sm-10">Convention #@Html.DisplayFor(model => model.Convention.Id)</dd>
-    </dl>
-</div>
+                    <dt class="col-sm-4">Période</dt>
+                    <dd class="col-sm-8">
+                        Du @Model.Convention.DateDebut.ToString("dd/MM/yyyy")
+                        au @Model.Convention.DateFin.ToString("dd/MM/yyyy")
+                    </dd>
 
-<div>
-    <!-- Bouton Edit - Admin et Etudiant seulement -->
-    @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
-    {
-        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Modifier</a>
-    }
+                    <dt class="col-sm-4">Statut convention</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Convention.Statut == "En cours")
+                        {
+                            <span class="badge bg-primary">🔄 @Model.Convention.Statut</span>
+                        }
+                        else if (Model.Convention.Statut == "Terminée")
+                        {
+                            <span class="badge bg-success">✓ @Model.Convention.Statut</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-info">@Model.Convention.Statut</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
 
-    <!-- Bouton Delete - Seulement Admin -->
-    @if (User.IsInRole("Admin"))
-    {
-        <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger">Supprimer</a>
-    }
+    <div class="col-lg-4">
+        <div class="d-grid gap-2">
+            @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">✏️ Modifier</a>
+            }
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">🗑️ Supprimer</a>
+            }
+            <a asp-action="Index" class="btn btn-outline-secondary">← Retour à la liste</a>
+        </div>
 
-    <a asp-action="Index" class="btn btn-secondary">Retour à la liste</a>
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">Actions rapides</h6>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Conventions" asp-action="Details" asp-route-id="@Model.ConventionId" class="btn btn-outline-primary btn-sm">📋 Voir la convention</a>
+                        <a asp-controller="Etudiants" asp-action="Details" asp-route-id="@Model.Convention.Candidature.EtudiantId" class="btn btn-outline-info btn-sm">👤 Profil étudiant</a>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.NomFichier))
+        {
+            <div class="alert alert-success mt-3">
+                <small><strong>✓ Rapport déposé</strong></small><br />
+                @* <a href="@Model.NomFichier" target="_blank" class="btn btn-sm btn-outline-success mt-2">📥 Télécharger</a> *@
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning mt-3">
+                <small><strong>⚠️ Attention :</strong> Aucun fichier PDF n'a été attaché à ce rapport.</small>
+            </div>
+        }
+    </div>
 </div>

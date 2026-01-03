@@ -1,51 +1,97 @@
 ﻿@model GestionStages.Models.Convention
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Supprimer la convention";
 }
 
-<h1>Delete</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Conventions</a></li>
+        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">Convention #@Model.Id</a></li>
+        <li class="breadcrumb-item active">Supprimer</li>
+    </ol>
+</nav>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>Convention</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateSignature)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateSignature)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateDebut)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateDebut)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateFin)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateFin)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Statut)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Statut)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Candidature)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Candidature.Id)
-        </dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">⚠️ Confirmer la suppression</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <strong>Attention !</strong> Vous êtes sur le point de supprimer cette convention de stage. Cette action est <strong>irréversible</strong>.
+                </div>
+
+                <h6 class="mb-3">Détails de la convention à supprimer :</h6>
+
+                <dl class="row">
+                    <dt class="col-sm-4">Étudiant</dt>
+                    <dd class="col-sm-8"><strong>@Model.Candidature.Etudiant.Nom @Model.Candidature.Etudiant.Prenom</strong></dd>
+
+                    <dt class="col-sm-4">Offre de stage</dt>
+                    <dd class="col-sm-8">@Model.Candidature.OffreStage.Titre</dd>
+
+                    <dt class="col-sm-4">Entreprise</dt>
+                    <dd class="col-sm-8">@Model.Candidature.OffreStage.Entreprise.Nom</dd>
+
+                    <dt class="col-sm-4">Date de signature</dt>
+                    <dd class="col-sm-8">@Model.DateSignature.ToString("dd/MM/yyyy")</dd>
+
+                    <dt class="col-sm-4">Période du stage</dt>
+                    <dd class="col-sm-8">
+                        Du @Model.DateDebut.ToString("dd/MM/yyyy")
+                        au @Model.DateFin.ToString("dd/MM/yyyy")
+                        <br />
+                        <small class="text-muted">(@((Model.DateFin - Model.DateDebut).Days) jours)</small>
+                    </dd>
+
+                    <dt class="col-sm-4">Statut</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Statut == "En cours")
+                        {
+                            <span class="badge bg-primary">🔄 @Model.Statut</span>
+                        }
+                        else if (Model.Statut == "Terminée")
+                        {
+                            <span class="badge bg-success">✓ @Model.Statut</span>
+                        }
+                        else if (Model.Statut == "Signée")
+                        {
+                            <span class="badge bg-info">📝 @Model.Statut</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">@Model.Statut</span>
+                        }
+                    </dd>
+                </dl>
+
+                <hr />
+
+                <form asp-action="Delete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            🗑️ Oui, supprimer définitivement
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-3">
+            <h6>💡 Que se passe-t-il après la suppression ?</h6>
+            <ul class="small mb-0">
+                <li>La convention est supprimée de la base de données</li>
+                <li>La candidature associée reste conservée</li>
+                <li>Les rapports de stage liés seront également supprimés</li>
+            </ul>
+        </div>
+    </div>
 </div>

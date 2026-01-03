@@ -1,85 +1,99 @@
 ﻿@model GestionStages.Models.RapportStage
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Créer un rapport de stage";
 }
 
-<h1>Créer un rapport de stage</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Rapports</a></li>
+        <li class="breadcrumb-item active">Nouveau rapport</li>
+    </ol>
+</nav>
 
-<h4>Nouveau rapport</h4>
-<hr />
-
-<!-- Afficher le message de succès -->
-@* @if (TempData["Success"] != null)
+@if (TempData["Warning"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["Success"]
+    <div class="alert alert-warning alert-dismissible fade show">
+        @TempData["Warning"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-} *@
-
-<!-- Afficher le message d'erreur -->
-@* @if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-} *@
-
-<!-- Message d'avertissement -->
-@* @if (TempData["Warning"] != null)
-{
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <strong>⚠️ Attention :</strong> @TempData["Warning"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-} *@
+}
 
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-            <!-- Titre -->
-            <div class="form-group mb-3">
-                <label asp-for="Titre" class="control-label"></label>
-                <input asp-for="Titre" class="form-control" />
-                <span asp-validation-for="Titre" class="text-danger"></span>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Créer un nouveau rapport de stage</h5>
             </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-            <!-- Nom du fichier -->
-            <div class="form-group mb-3">
-                <label asp-for="NomFichier" class="control-label">Nom du fichier</label>
-                <input asp-for="NomFichier" class="form-control" placeholder="rapport_stage_2024.pdf" />
-                <span asp-validation-for="NomFichier" class="text-danger"></span>
-            </div>
+                    <!-- Convention -->
+                    <div class="mb-3">
+                        <label asp-for="ConventionId" class="form-label">Convention de stage *</label>
+                        <select asp-for="ConventionId" class="form-select" asp-items="ViewBag.ConventionId">
+                            <option value="">-- Sélectionnez une convention --</option>
+                        </select>
+                        <span asp-validation-for="ConventionId" class="text-danger"></span>
+                        @if (User.IsInRole("Etudiant"))
+                        {
+                            <small class="text-muted">Seules vos conventions actives sont affichées</small>
+                        }
+                    </div>
 
-            <!-- Date de dépôt -->
-            <div class="form-group mb-3">
-                <label asp-for="DateDepot" class="control-label">Date de dépôt</label>
-                <input asp-for="DateDepot" class="form-control" type="date" />
-                <span asp-validation-for="DateDepot" class="text-danger"></span>
-            </div>
+                    <!-- Titre -->
+                    <div class="mb-3">
+                        <label asp-for="Titre" class="form-label">Titre du rapport *</label>
+                        <input asp-for="Titre" class="form-control" placeholder="Ex: Rapport de stage en développement web" />
+                        <span asp-validation-for="Titre" class="text-danger"></span>
+                    </div>
 
-            <!-- Convention -->
-            <div class="form-group mb-3">
-                <label asp-for="ConventionId" class="control-label">Convention</label>
-                <select asp-for="ConventionId" class="form-control" asp-items="ViewBag.ConventionId">
-                    <option value="">-- Sélectionner une convention --</option>
-                </select>
-                <span asp-validation-for="ConventionId" class="text-danger"></span>
-            </div>
+                    <!-- Upload fichier PDF -->
+                    <div class="mb-3">
+                        <label for="pdfFile" class="form-label">Fichier PDF du rapport *</label>
+                        <input type="file" id="pdfFile" name="pdfFile" class="form-control" accept=".pdf" />
+                        <small class="text-muted">Formats acceptés : PDF uniquement (max 10 Mo)</small>
+                    </div>
 
-            <div class="form-group">
-                <input type="submit" value="Créer" class="btn btn-primary" />
+                    <!-- Date de dépôt (caché, auto-rempli) -->
+                    <input type="hidden" asp-for="DateDepot" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+
+                    <!-- Boutons -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">📤 Déposer le rapport</button>
+                        <a asp-action="Index" class="btn btn-secondary">Annuler</a>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Retour à la liste</a>
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6 class="card-title">💡 Informations</h6>
+                <ul class="small mb-0">
+                    <li>Vous devez avoir une <strong>convention active</strong></li>
+                    <li>Le fichier doit être au <strong>format PDF</strong></li>
+                    <li>Taille maximale : <strong>10 Mo</strong></li>
+                    <li>Le titre doit être descriptif</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-3">
+            <small><strong>📄 Contenu du rapport :</strong> Introduction, missions réalisées, compétences acquises, conclusion.</small>
+        </div>
+
+        @if (User.IsInRole("Etudiant"))
+        {
+            <div class="alert alert-success mt-3">
+                <small><strong>💡 Astuce :</strong> Relisez votre rapport avant de le déposer. Une fois validé, contactez votre encadrant pour modification.</small>
+            </div>
+        }
+    </div>
 </div>
 
 @section Scripts {
