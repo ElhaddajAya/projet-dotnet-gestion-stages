@@ -1,53 +1,94 @@
 ﻿@model GestionStages.Models.Entreprise
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Créer une entreprise";
 }
 
-<h1>Create</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Entreprises</a></li>
+        <li class="breadcrumb-item active">Nouvelle entreprise</li>
+    </ol>
+</nav>
 
-<h4>Entreprise</h4>
-<hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Nom" class="control-label"></label>
-                <input asp-for="Nom" class="form-control" />
-                <span asp-validation-for="Nom" class="text-danger"></span>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Ajouter une nouvelle entreprise</h5>
             </div>
-            <div class="form-group">
-                <label asp-for="Adresse" class="control-label"></label>
-                <input asp-for="Adresse" class="form-control" />
-                <span asp-validation-for="Adresse" class="text-danger"></span>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <!-- Nom -->
+                    <div class="mb-3">
+                        <label asp-for="Nom" class="form-label">Nom de l'entreprise *</label>
+                        <input asp-for="Nom" class="form-control" placeholder="Ex: TechCorp Solutions" />
+                        <span asp-validation-for="Nom" class="text-danger"></span>
+                    </div>
+
+                    <!-- Secteur -->
+                    <div class="mb-3">
+                        <label asp-for="Secteur" class="form-label">Secteur d'activité *</label>
+                        <input asp-for="Secteur" class="form-control" placeholder="Ex: Informatique, Finance, Santé..." />
+                        <span asp-validation-for="Secteur" class="text-danger"></span>
+                    </div>
+
+                    <!-- Adresse -->
+                    <div class="mb-3">
+                        <label asp-for="Adresse" class="form-label">Adresse complète *</label>
+                        <textarea asp-for="Adresse" class="form-control" rows="2" placeholder="Ex: 123 Avenue Mohammed V, 10000 Rabat"></textarea>
+                        <span asp-validation-for="Adresse" class="text-danger"></span>
+                    </div>
+
+                    <!-- Téléphone -->
+                    <div class="mb-3">
+                        <label asp-for="Telephone" class="form-label">Téléphone *</label>
+                        <input asp-for="Telephone" type="tel" class="form-control" placeholder="Ex: +212 5 37 12 34 56" />
+                        <span asp-validation-for="Telephone" class="text-danger"></span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label asp-for="EmailContact" class="form-label">Email de contact *</label>
+                        <input asp-for="EmailContact" type="email" class="form-control" placeholder="Ex: contact@techcorp.ma" />
+                        <span asp-validation-for="EmailContact" class="text-danger"></span>
+                        <small class="text-muted">Cet email sera utilisé pour la connexion de l'entreprise</small>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Créer l'entreprise</button>
+                        <a asp-action="Index" class="btn btn-secondary">Annuler</a>
+                    </div>
+                </form>
             </div>
-            <div class="form-group">
-                <label asp-for="Telephone" class="control-label"></label>
-                <input asp-for="Telephone" class="form-control" />
-                <span asp-validation-for="Telephone" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6 class="card-title">💡 Informations</h6>
+                <ul class="small mb-0">
+                    <li>Tous les champs sont obligatoires</li>
+                    <li>L'email servira d'identifiant de connexion</li>
+                    <li>L'entreprise devra créer un compte utilisateur séparément</li>
+                    <li>Ces informations seront visibles par les étudiants</li>
+                </ul>
             </div>
-            <div class="form-group">
-                <label asp-for="EmailContact" class="control-label"></label>
-                <input asp-for="EmailContact" class="form-control" />
-                <span asp-validation-for="EmailContact" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Secteur" class="control-label"></label>
-                <input asp-for="Secteur" class="form-control" />
-                <span asp-validation-for="Secteur" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
+
+        <div class="alert alert-warning mt-3">
+            <small><strong>⚠️ Note :</strong> Après création, vous devrez créer un compte utilisateur avec le rôle "Entreprise" pour cette adresse email.</small>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

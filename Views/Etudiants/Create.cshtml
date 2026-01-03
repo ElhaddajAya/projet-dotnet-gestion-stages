@@ -1,58 +1,114 @@
 ﻿@model GestionStages.Models.Etudiant
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Créer un étudiant";
 }
 
-<h1>Create</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Étudiants</a></li>
+        <li class="breadcrumb-item active">Nouvel étudiant</li>
+    </ol>
+</nav>
 
-<h4>Etudiant</h4>
-<hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Nom" class="control-label"></label>
-                <input asp-for="Nom" class="form-control" />
-                <span asp-validation-for="Nom" class="text-danger"></span>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Ajouter un nouvel étudiant</h5>
             </div>
-            <div class="form-group">
-                <label asp-for="Prenom" class="control-label"></label>
-                <input asp-for="Prenom" class="form-control" />
-                <span asp-validation-for="Prenom" class="text-danger"></span>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="row">
+                        <!-- Nom -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Nom" class="form-label">Nom *</label>
+                            <input asp-for="Nom" class="form-control" placeholder="Ex: Alami" />
+                            <span asp-validation-for="Nom" class="text-danger"></span>
+                        </div>
+
+                        <!-- Prénom -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Prenom" class="form-label">Prénom *</label>
+                            <input asp-for="Prenom" class="form-control" placeholder="Ex: Karim" />
+                            <span asp-validation-for="Prenom" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">Email *</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="Ex: karim.alami@university.ma" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                        <small class="text-muted">Cet email sera utilisé pour la connexion de l'étudiant</small>
+                    </div>
+
+                    <!-- Téléphone -->
+                    <div class="mb-3">
+                        <label asp-for="Telephone" class="form-label">Téléphone *</label>
+                        <input asp-for="Telephone" type="tel" class="form-control" placeholder="Ex: +212 6 12 34 56 78" />
+                        <span asp-validation-for="Telephone" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <!-- Filière -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Filiere" class="form-label">Filière *</label>
+                            <input asp-for="Filiere" class="form-control" placeholder="Ex: Génie Informatique" />
+                            <span asp-validation-for="Filiere" class="text-danger"></span>
+                        </div>
+
+                        <!-- Niveau -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Niveau" class="form-label">Niveau d'études *</label>
+                            <select asp-for="Niveau" class="form-select">
+                                <option value="">-- Sélectionnez --</option>
+                                <option value="Licence 1">Licence 1</option>
+                                <option value="Licence 2">Licence 2</option>
+                                <option value="Licence 3">Licence 3</option>
+                                <option value="Master 1">Master 1</option>
+                                <option value="Master 2">Master 2</option>
+                                <option value="Doctorat">Doctorat</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                            <span asp-validation-for="Niveau" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Créer l'étudiant</button>
+                        <a asp-action="Index" class="btn btn-secondary">Annuler</a>
+                    </div>
+                </form>
             </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6 class="card-title">💡 Informations</h6>
+                <ul class="small mb-0">
+                    <li>Tous les champs sont obligatoires</li>
+                    <li>L'email servira d'identifiant de connexion</li>
+                    <li>Utilisez un email professionnel ou universitaire</li>
+                    <li>Le niveau peut être modifié plus tard</li>
+                </ul>
             </div>
-            <div class="form-group">
-                <label asp-for="Telephone" class="control-label"></label>
-                <input asp-for="Telephone" class="form-control" />
-                <span asp-validation-for="Telephone" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Filiere" class="control-label"></label>
-                <input asp-for="Filiere" class="form-control" />
-                <span asp-validation-for="Filiere" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Niveau" class="control-label"></label>
-                <input asp-for="Niveau" class="form-control" />
-                <span asp-validation-for="Niveau" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
+
+        <div class="alert alert-warning mt-3">
+            <small><strong>⚠️ Note :</strong> Après création, vous devrez créer un compte utilisateur avec le rôle "Etudiant" pour cette adresse email.</small>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

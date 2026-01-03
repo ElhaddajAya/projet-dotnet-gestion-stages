@@ -1,59 +1,144 @@
 ﻿@model GestionStages.Models.Etudiant
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Modifier l'étudiant";
 }
 
-<h1>Edit</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Étudiants</a></li>
+        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Nom @Model.Prenom</a></li>
+        <li class="breadcrumb-item active">Modifier</li>
+    </ol>
+</nav>
 
-<h4>Etudiant</h4>
-<hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Nom" class="control-label"></label>
-                <input asp-for="Nom" class="form-control" />
-                <span asp-validation-for="Nom" class="text-danger"></span>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Modifier : @Model.Nom @Model.Prenom</h5>
             </div>
-            <div class="form-group">
-                <label asp-for="Prenom" class="control-label"></label>
-                <input asp-for="Prenom" class="form-control" />
-                <span asp-validation-for="Prenom" class="text-danger"></span>
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="row">
+                        <!-- Nom -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Nom" class="form-label">Nom *</label>
+                            <input asp-for="Nom" class="form-control" placeholder="Ex: Dupont" />
+                            <span asp-validation-for="Nom" class="text-danger"></span>
+                        </div>
+
+                        <!-- Prénom -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Prenom" class="form-label">Prénom *</label>
+                            <input asp-for="Prenom" class="form-control" placeholder="Ex: Jean" />
+                            <span asp-validation-for="Prenom" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">Email *</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="Ex: jean.dupont@example.com" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                        @if (User.IsInRole("Etudiant"))
+                        {
+                            <small class="text-muted">Cet email est utilisé pour votre connexion</small>
+                        }
+                    </div>
+
+                    <!-- Téléphone -->
+                    <div class="mb-3">
+                        <label asp-for="Telephone" class="form-label">Téléphone *</label>
+                        <input asp-for="Telephone" type="tel" class="form-control" placeholder="Ex: +212 6 12 34 56 78" />
+                        <span asp-validation-for="Telephone" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <!-- Filière -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Filiere" class="form-label">Filière *</label>
+                            <input asp-for="Filiere" class="form-control" placeholder="Ex: Informatique, Génie Civil..." />
+                            <span asp-validation-for="Filiere" class="text-danger"></span>
+                        </div>
+
+                        <!-- Niveau -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Niveau" class="form-label">Niveau d'études *</label>
+                            <select asp-for="Niveau" class="form-select">
+                                <option value="">-- Sélectionnez --</option>
+                                <option value="Licence 1">Licence 1</option>
+                                <option value="Licence 2">Licence 2</option>
+                                <option value="Licence 3">Licence 3</option>
+                                <option value="Master 1">Master 1</option>
+                                <option value="Master 2">Master 2</option>
+                                <option value="Doctorat">Doctorat</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                            <span asp-validation-for="Niveau" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-warning">Enregistrer les modifications</button>
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">Annuler</a>
+                    </div>
+                </form>
             </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="alert alert-info">
+            <h6>ℹ️ Information</h6>
+            <p class="small mb-0">
+                @if (User.IsInRole("Etudiant"))
+                {
+                    <text>Ces informations peuvent être vues par les entreprises lorsque vous postulez.</text>
+                }
+                else
+                {
+                    <text>Modifiez les informations de cet étudiant.</text>
+                }
+            </p>
+        </div>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Actions admin</h6>
+                    <div class="d-grid gap-2">
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">👁️ Voir le profil</a>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">🗑️ Supprimer</a>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Telephone" class="control-label"></label>
-                <input asp-for="Telephone" class="form-control" />
-                <span asp-validation-for="Telephone" class="text-danger"></span>
+        }
+
+        @if (User.IsInRole("Etudiant"))
+        {
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">💡 Conseils</h6>
+                    <ul class="small mb-0">
+                        <li>Utilisez un email professionnel</li>
+                        <li>Gardez vos coordonnées à jour</li>
+                        <li>Indiquez votre filière précisément</li>
+                    </ul>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Filiere" class="control-label"></label>
-                <input asp-for="Filiere" class="form-control" />
-                <span asp-validation-for="Filiere" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Niveau" class="control-label"></label>
-                <input asp-for="Niveau" class="form-control" />
-                <span asp-validation-for="Niveau" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+        }
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

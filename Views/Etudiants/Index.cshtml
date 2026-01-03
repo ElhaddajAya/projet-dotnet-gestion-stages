@@ -1,77 +1,119 @@
 ﻿@model IEnumerable<GestionStages.Models.Etudiant>
 
 @{
-    ViewData["Title"] = "Étudiants";
+    ViewData["Title"] = User.IsInRole("Admin") ? "Liste des étudiants" : "Mon profil";
 }
 
-<h1>Étudiants</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>@ViewData["Title"]</h1>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Ajouter un étudiant</a>
+    }
+</div>
 
-<!-- Messages TempData -->
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        ✅ @TempData["Success"]
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
-@if (TempData["Error"] != null)
+@if (Model != null && Model.Any())
 {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        ❌ @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-
-@if (TempData["Warning"] != null)
-{
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        ⚠️ @TempData["Warning"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-
-<!-- Bouton Create - Seulement Admin -->
-@if (User.IsInRole("Admin"))
-{
-    <p>
-        <a asp-action="Create" class="btn btn-primary">Créer un nouvel étudiant</a>
-    </p>
-}
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>Nom</th>
-            <th>Prénom</th>
-            <th>Email</th>
-            <th>Téléphone</th>
-            <th>Filière</th>
-            <th>Niveau</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
+    @if (User.IsInRole("Admin"))
+    {
+        <!-- Vue TABLE pour Admin -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nom complet</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Filière</th>
+                        <th>Niveau</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><strong>@item.Nom @item.Prenom</strong></td>
+                            <td>@item.Email</td>
+                            <td>@item.Telephone</td>
+                            <td>@item.Filiere</td>
+                            <td>@item.Niveau</td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info" title="Détails">👁️</a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning" title="Modifier">✏️</a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" title="Supprimer">🗑️</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <!-- Vue CARD pour Étudiant (son profil uniquement) -->
         @foreach (var item in Model)
         {
-            <tr>
-                <td>@Html.DisplayFor(modelItem => item.Nom)</td>
-                <td>@Html.DisplayFor(modelItem => item.Prenom)</td>
-                <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                <td>@Html.DisplayFor(modelItem => item.Telephone)</td>
-                <td>@Html.DisplayFor(modelItem => item.Filiere)</td>
-                <td>@Html.DisplayFor(modelItem => item.Niveau)</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Détails</a>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Modifier</a>
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">👤 Mon profil étudiant</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <dt class="col-sm-3">Nom complet</dt>
+                                <dd class="col-sm-9"><strong>@item.Nom @item.Prenom</strong></dd>
 
-                    <!-- Bouton Delete - Seulement Admin -->
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Supprimer</a>
-                    }
-                </td>
-            </tr>
+                                <dt class="col-sm-3">Email</dt>
+                                <dd class="col-sm-9">@item.Email</dd>
+
+                                <dt class="col-sm-3">Téléphone</dt>
+                                <dd class="col-sm-9">@item.Telephone</dd>
+
+                                <dt class="col-sm-3">Filière</dt>
+                                <dd class="col-sm-9">@item.Filiere</dd>
+
+                                <dt class="col-sm-3">Niveau</dt>
+                                <dd class="col-sm-9">@item.Niveau</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="d-grid gap-2">
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning">✏️ Modifier mon profil</a>
+                        <a asp-controller="OffresStages" asp-action="Index" class="btn btn-outline-primary">🔍 Offres disponibles</a>
+                        <a asp-controller="Candidatures" asp-action="Index" class="btn btn-outline-info">📝 Mes candidatures</a>
+                        <a asp-controller="RapportStages" asp-action="Index" class="btn btn-outline-secondary">📄 Mes rapports</a>
+                    </div>
+
+                    <div class="alert alert-success mt-3">
+                        <small><strong>💡 Conseil :</strong> Complétez votre profil pour augmenter vos chances d'être contacté par les entreprises.</small>
+                    </div>
+                </div>
+            </div>
         }
-    </tbody>
-</table>
+    }
+}
+else
+{
+    <div class="alert alert-warning text-center">
+        <p class="mb-0">Aucun étudiant trouvé.</p>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Create" class="btn btn-primary mt-3">+ Ajouter un étudiant</a>
+        }
+    </div>
+}

@@ -1,54 +1,110 @@
 ﻿@model GestionStages.Models.Entreprise
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Modifier l'entreprise";
 }
 
-<h1>Edit</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Entreprises</a></li>
+        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Nom</a></li>
+        <li class="breadcrumb-item active">Modifier</li>
+    </ol>
+</nav>
 
-<h4>Entreprise</h4>
-<hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Nom" class="control-label"></label>
-                <input asp-for="Nom" class="form-control" />
-                <span asp-validation-for="Nom" class="text-danger"></span>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Modifier : @Model.Nom</h5>
             </div>
-            <div class="form-group">
-                <label asp-for="Adresse" class="control-label"></label>
-                <input asp-for="Adresse" class="form-control" />
-                <span asp-validation-for="Adresse" class="text-danger"></span>
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <!-- Nom -->
+                    <div class="mb-3">
+                        <label asp-for="Nom" class="form-label">Nom de l'entreprise *</label>
+                        <input asp-for="Nom" class="form-control" placeholder="Ex: TechCorp" />
+                        <span asp-validation-for="Nom" class="text-danger"></span>
+                    </div>
+
+                    <!-- Secteur -->
+                    <div class="mb-3">
+                        <label asp-for="Secteur" class="form-label">Secteur d'activité *</label>
+                        <input asp-for="Secteur" class="form-control" placeholder="Ex: Informatique, Finance, Santé..." />
+                        <span asp-validation-for="Secteur" class="text-danger"></span>
+                    </div>
+
+                    <!-- Adresse -->
+                    <div class="mb-3">
+                        <label asp-for="Adresse" class="form-label">Adresse complète *</label>
+                        <textarea asp-for="Adresse" class="form-control" rows="2" placeholder="Ex: 123 Rue de la Paix, 75001 Paris"></textarea>
+                        <span asp-validation-for="Adresse" class="text-danger"></span>
+                    </div>
+
+                    <!-- Téléphone -->
+                    <div class="mb-3">
+                        <label asp-for="Telephone" class="form-label">Téléphone *</label>
+                        <input asp-for="Telephone" type="tel" class="form-control" placeholder="Ex: +212 6 12 34 56 78" />
+                        <span asp-validation-for="Telephone" class="text-danger"></span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label asp-for="EmailContact" class="form-label">Email de contact *</label>
+                        <input asp-for="EmailContact" type="email" class="form-control" placeholder="Ex: contact@entreprise.com" />
+                        <span asp-validation-for="EmailContact" class="text-danger"></span>
+                        @if (User.IsInRole("Entreprise"))
+                        {
+                            <small class="text-muted">Cet email est utilisé pour votre connexion</small>
+                        }
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-warning">Enregistrer les modifications</button>
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">Annuler</a>
+                    </div>
+                </form>
             </div>
-            <div class="form-group">
-                <label asp-for="Telephone" class="control-label"></label>
-                <input asp-for="Telephone" class="form-control" />
-                <span asp-validation-for="Telephone" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="alert alert-info">
+            <h6>ℹ️ Information</h6>
+            <p class="small mb-0">
+                @if (User.IsInRole("Entreprise"))
+                {
+                    <text>Ces informations sont visibles par les étudiants et les administrateurs.</text>
+                }
+                else
+                {
+                    <text>Modifiez les informations de cette entreprise.</text>
+                }
+            </p>
+        </div>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Actions admin</h6>
+                    <div class="d-grid gap-2">
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">👁️ Voir le profil</a>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">🗑️ Supprimer</a>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="EmailContact" class="control-label"></label>
-                <input asp-for="EmailContact" class="form-control" />
-                <span asp-validation-for="EmailContact" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Secteur" class="control-label"></label>
-                <input asp-for="Secteur" class="form-control" />
-                <span asp-validation-for="Secteur" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+        }
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
