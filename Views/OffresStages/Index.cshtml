@@ -1,87 +1,97 @@
 ﻿@model IEnumerable<GestionStages.Models.OffresStage>
-@using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
 
 @{
     ViewData["Title"] = "Offres de stage";
 }
 
-<h1>Offres de stage disponibles</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>@(User.IsInRole("Entreprise") ? "Mes offres de stage" : "Offres de stage")</h1>
+    @if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
+    {
+        <a asp-action="Create" class="btn btn-success">+ Créer une offre</a>
+    }
+</div>
 
-<!-- Messages de feedback -->
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <strong>✓</strong> @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
-@if (TempData["Error"] != null)
+@if (Model != null && Model.Any())
 {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <strong>✗</strong> @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-<!-- Bouton créer offre (Admin et Entreprise uniquement) -->
-@if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
-{
-    <p>
-        <a asp-action="Create" class="btn btn-primary">Créer une offre</a>
-    </p>
-}
-
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Titre</th>
-            <th>Entreprise</th>
-            <th>Durée (mois)</th>
-            <th>Date début</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model != null && Model.Any())
-        {
-            @foreach (var item in Model)
+    @if (User.IsInRole("Etudiant") || !User.Identity.IsAuthenticated)
+    {
+        <div class="row g-4">
+            @foreach (var offre in Model)
             {
-                <tr>
-                    <td><strong>@Html.DisplayFor(modelItem => item.Titre)</strong></td>
-                    <td>@Html.DisplayFor(modelItem => item.Entreprise.Nom)</td>
-                    <td>@Html.DisplayFor(modelItem => item.DureeMois) mois</td>
-                    <td>@(item.DateDebutSouhaitee?.ToString("dd/MM/yyyy") ?? "Non spécifiée")</td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">👁️ Détails</a>
-
-                        @* Étudiant peut postuler *@
-                        @if (User.IsInRole("Etudiant"))
-                        {
-                            <a asp-controller="Candidatures" asp-action="Create" asp-route-offreId="@item.Id" class="btn btn-sm btn-success">
-                                Postuler
-                            </a>
-                        }
-
-                        @* Admin et Entreprise peuvent modifier/supprimer *@
-                        @if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
-                        {
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">✏️ Modifier</a>
-                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">🗑️ Supprimer</a>
-                        }
-                    </td>
-                </tr>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">@offre.Titre</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">@offre.Entreprise.Nom</h6>
+                            <p class="card-text">@(offre.Description.Length > 100 ? offre.Description.Substring(0, 100) + "..." : offre.Description)</p>
+                            <ul class="list-unstyled small text-muted">
+                                <li><strong>Durée :</strong> @offre.DureeMois mois</li>
+                                <li><strong>Début :</strong> @(offre.DateDebutSouhaitee?.ToString("dd/MM/yyyy") ?? "Flexible")</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a asp-action="Details" asp-route-id="@offre.Id" class="btn btn-sm btn-outline-primary">Détails</a>
+                            @if (User.IsInRole("Etudiant"))
+                            {
+                                <a asp-controller="Candidatures" asp-action="Create" asp-route-offreId="@offre.Id" class="btn btn-sm btn-success">Postuler</a>
+                            }
+                        </div>
+                    </div>
+                </div>
             }
-        }
-        else
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Titre</th>
+                        <th>Entreprise</th>
+                        <th>Durée</th>
+                        <th>Date début</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var offre in Model)
+                    {
+                        <tr>
+                            <td><strong>@offre.Titre</strong></td>
+                            <td>@offre.Entreprise.Nom</td>
+                            <td>@offre.DureeMois mois</td>
+                            <td>@(offre.DateDebutSouhaitee?.ToString("dd/MM/yyyy") ?? "Flexible")</td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@offre.Id" class="btn btn-outline-info" title="Détails">👁️</a>
+                                    <a asp-action="Edit" asp-route-id="@offre.Id" class="btn btn-outline-warning" title="Modifier">✏️</a>
+                                    <a asp-action="Delete" asp-route-id="@offre.Id" class="btn btn-outline-danger" title="Supprimer">🗑️</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+else
+{
+    <div class="alert alert-info text-center">
+        <p class="mb-0">Aucune offre de stage disponible pour le moment.</p>
+        @if (User.IsInRole("Entreprise"))
         {
-            <tr>
-                <td colspan="5" class="text-center text-muted">
-                    <em>Aucune offre de stage disponible pour le moment.</em>
-                </td>
-            </tr>
+            <a asp-action="Create" class="btn btn-success mt-3">Créer votre première offre</a>
         }
-    </tbody>
-</table>
+    </div>
+}

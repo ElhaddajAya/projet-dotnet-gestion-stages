@@ -83,6 +83,7 @@ namespace GestionStages.Controllers
             var candidature = await _context.Candidatures
                 .Include(c => c.Etudiant)
                 .Include(c => c.OffreStage)
+                    .ThenInclude(o => o.Entreprise)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (candidature == null) return NotFound();
@@ -101,6 +102,60 @@ namespace GestionStages.Controllers
             }
 
             return View(candidature);
+        }
+
+        // POST: Candidatures/Accepter
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Entreprise")]
+        public async Task<IActionResult> Accepter(int id)
+        {
+            var candidature = await _context.Candidatures
+                .Include(c => c.OffreStage)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (candidature == null) return NotFound();
+
+            if (User.IsInRole("Entreprise"))
+            {
+                var userEmail = User.Identity.Name;
+                var entreprise = await _context.Entreprises.FirstOrDefaultAsync(e => e.EmailContact == userEmail);
+                if (entreprise == null || candidature.OffreStage.EntrepriseId != entreprise.Id) return Forbid();
+            }
+
+            candidature.Statut = "Acceptée";
+            _context.Update(candidature);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "✓ Candidature acceptée avec succès !";
+            return RedirectToAction(nameof(Details), new { id = id });
+        }
+
+        // POST: Candidatures/Refuser
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Entreprise")]
+        public async Task<IActionResult> Refuser(int id)
+        {
+            var candidature = await _context.Candidatures
+                .Include(c => c.OffreStage)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (candidature == null) return NotFound();
+
+            if (User.IsInRole("Entreprise"))
+            {
+                var userEmail = User.Identity.Name;
+                var entreprise = await _context.Entreprises.FirstOrDefaultAsync(e => e.EmailContact == userEmail);
+                if (entreprise == null || candidature.OffreStage.EntrepriseId != entreprise.Id) return Forbid();
+            }
+
+            candidature.Statut = "Refusée";
+            _context.Update(candidature);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "✗ Candidature refusée.";
+            return RedirectToAction(nameof(Details), new { id = id });
         }
 
         // GET: Candidatures/Create
@@ -138,46 +193,30 @@ namespace GestionStages.Controllers
         [Authorize(Roles = "Admin,Etudiant")]
         public async Task<IActionResult> Create([Bind("Id,DateCandidature,Statut,EtudiantId,OffreStageId,CheminCV")] Candidature candidature, IFormFile? cvFile)
         {
-            // DEBUG: Afficher les valeurs reçues
-            Console.WriteLine("========== DEBUG CREATE CANDIDATURE ==========");
-            Console.WriteLine($"EtudiantId reçu: {candidature.EtudiantId}");
-            Console.WriteLine($"OffreStageId reçu: {candidature.OffreStageId}");
-            Console.WriteLine($"DateCandidature reçu: {candidature.DateCandidature}");
-            Console.WriteLine($"Statut reçu: {candidature.Statut}");
-            Console.WriteLine($"CheminCV AVANT upload: {candidature.CheminCV}");
-            Console.WriteLine($"Fichier CV reçu: {cvFile?.FileName ?? "AUCUN"}");
-
             if (User.IsInRole("Etudiant"))
             {
                 var userEmail = User.Identity.Name;
                 var etudiant = await _context.Etudiants.FirstOrDefaultAsync(e => e.Email == userEmail);
                 if (etudiant == null) return Forbid();
                 candidature.EtudiantId = etudiant.Id;
-                Console.WriteLine($"EtudiantId forcé à: {candidature.EtudiantId}");
             }
 
-            // Définir les valeurs par défaut si elles ne sont pas fournies
             if (candidature.DateCandidature == default(DateTime))
             {
                 candidature.DateCandidature = DateTime.Now;
-                Console.WriteLine($"DateCandidature définie à: {candidature.DateCandidature}");
             }
 
             if (string.IsNullOrEmpty(candidature.Statut))
             {
                 candidature.Statut = "En attente";
-                Console.WriteLine($"Statut défini à: {candidature.Statut}");
             }
 
             if (cvFile != null && cvFile.Length > 0)
             {
-                Console.WriteLine($"Upload du fichier: {cvFile.FileName} ({cvFile.Length} bytes)");
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "cv");
                 Directory.CreateDirectory(uploadsFolder);
                 var uniqueFileName = $"{Guid.NewGuid()}_{cvFile.FileName}";
                 var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                Console.WriteLine($"Chemin complet: {filePath}");
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
@@ -185,48 +224,15 @@ namespace GestionStages.Controllers
                 }
 
                 candidature.CheminCV = $"/uploads/cv/{uniqueFileName}";
-                Console.WriteLine($"CheminCV défini à: {candidature.CheminCV}");
-            }
-            else
-            {
-                Console.WriteLine("AUCUN FICHIER CV UPLOADÉ");
             }
 
             ModelState.Remove("Etudiant");
             ModelState.Remove("OffreStage");
 
-            // DEBUG: Afficher l'état du ModelState
-            Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
-            if (!ModelState.IsValid)
-            {
-                Console.WriteLine("ERREURS DE VALIDATION:");
-                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-                {
-                    Console.WriteLine($"  - {error.ErrorMessage}");
-                }
-            }
-
-            // DEBUG: Afficher les valeurs JUSTE AVANT l'insertion
-            Console.WriteLine("========== VALEURS AVANT INSERT ==========");
-            Console.WriteLine($"candidature.Id: {candidature.Id}");
-            Console.WriteLine($"candidature.EtudiantId: {candidature.EtudiantId}");
-            Console.WriteLine($"candidature.OffreStageId: {candidature.OffreStageId}");
-            Console.WriteLine($"candidature.DateCandidature: {candidature.DateCandidature}");
-            Console.WriteLine($"candidature.Statut: {candidature.Statut}");
-            Console.WriteLine($"candidature.CheminCV: {candidature.CheminCV ?? "NULL"}");
-            Console.WriteLine("==========================================");
-
             if (ModelState.IsValid)
             {
                 _context.Add(candidature);
                 await _context.SaveChangesAsync();
-
-                // DEBUG: Vérifier après sauvegarde
-                var candidatureSaved = await _context.Candidatures.FindAsync(candidature.Id);
-                Console.WriteLine("========== APRÈS SAUVEGARDE ==========");
-                Console.WriteLine($"ID créé: {candidatureSaved?.Id}");
-                Console.WriteLine($"CheminCV dans BDD: {candidatureSaved?.CheminCV ?? "NULL"}");
-                Console.WriteLine("======================================");
 
                 TempData["Success"] = "Candidature créée avec succès !";
                 return RedirectToAction(nameof(Index));

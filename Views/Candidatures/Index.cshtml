@@ -1,129 +1,92 @@
 ﻿@model IEnumerable<GestionStages.Models.Candidature>
-@using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
 
 @{
     ViewData["Title"] = "Candidatures";
 }
 
-<h1>📋 Liste des candidatures</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>@(User.IsInRole("Etudiant") ? "Mes candidatures" : User.IsInRole("Entreprise") ? "Candidatures reçues" : "Liste des candidatures")</h1>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Créer une candidature</a>
+    }
+</div>
 
-<!-- Messages de feedback -->
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <strong>✓</strong> @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
-@if (TempData["Error"] != null)
+@if (Model != null && Model.Any())
 {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <strong>✗</strong> @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-@if (TempData["Warning"] != null)
-{
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <strong>⚠</strong> @TempData["Warning"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-<!-- Bouton créer candidature (Admin uniquement) -->
-@if (User.IsInRole("Admin"))
-{
-    <p>
-        <a asp-action="Create" class="btn btn-primary">➕ Créer une candidature</a>
-    </p>
-}
-else if (User.IsInRole("Etudiant"))
-{
-    <p>
-        <a asp-controller="OffresStages" asp-action="Index" class="btn btn-success">🔍 Voir les offres disponibles</a>
-    </p>
-}
-
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Étudiant</th>
-            <th>Offre de stage</th>
-            <th>Date candidature</th>
-            <th>Statut</th>
-            <th>CV</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model != null && Model.Any())
-        {
-            @foreach (var item in Model)
-            {
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
                 <tr>
-                    <td>@Html.DisplayFor(modelItem => item.Etudiant.Nom) @Html.DisplayFor(modelItem => item.Etudiant.Prenom)</td>
-                    <td>@Html.DisplayFor(modelItem => item.OffreStage.Titre)</td>
-                    <td>@item.DateCandidature.ToString("dd/MM/yyyy")</td>
-                    <td>
-                        @if (item.Statut == "Acceptée")
-                        {
-                            <span class="badge bg-success">✓ @item.Statut</span>
-                        }
-                        else if (item.Statut == "Refusée")
-                        {
-                            <span class="badge bg-danger">✗ @item.Statut</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-warning text-dark">⏳ @item.Statut</span>
-                        }
-                    </td>
-                    <td>
-                        @if (!string.IsNullOrEmpty(item.CheminCV))
-                        {
-                            <a href="@item.CheminCV" target="_blank" class="btn btn-sm btn-info">📄 Voir CV</a>
-                        }
-                        else
-                        {
-                            <span class="text-muted">Aucun CV</span>
-                        }
-                    </td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">👁️ Détails</a>
-
-                        @* Admin et Entreprise peuvent modifier (statut uniquement pour Entreprise) *@
-                        @if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
-                        {
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">✏️ Modifier</a>
-                        }
-
-                        @* Admin et Étudiant peuvent supprimer (Étudiant seulement ses propres candidatures) *@
-                        @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
-                        {
-                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">🗑️ Annuler</a>
-                        }
-                    </td>
+                    <th>Étudiant</th>
+                    <th>Offre de stage</th>
+                    <th>Date candidature</th>
+                    <th>Statut</th>
+                    <th>CV</th>
+                    <th class="text-end">Actions</th>
                 </tr>
-            }
-        }
-        else
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Etudiant.Nom @item.Etudiant.Prenom</td>
+                        <td><strong>@item.OffreStage.Titre</strong></td>
+                        <td>@item.DateCandidature.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (item.Statut == "Acceptée")
+                            {
+                                <span class="badge bg-success">✓ @item.Statut</span>
+                            }
+                            else if (item.Statut == "Refusée")
+                            {
+                                <span class="badge bg-danger">✗ @item.Statut</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">⏳ @item.Statut</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.CheminCV))
+                            {
+                                <a href="@item.CheminCV" target="_blank" class="btn btn-sm btn-outline-info">📄 Voir CV</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Aucun CV</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info" title="Détails">👁️</a>
+                                @if (User.IsInRole("Admin") || User.IsInRole("Etudiant"))
+                                {
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" title="Annuler">🗑️</a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info text-center">
+        <p class="mb-0">Aucune candidature trouvée.</p>
+        @if (User.IsInRole("Etudiant"))
         {
-            <tr>
-                <td colspan="6" class="text-center text-muted">
-                    <em>Aucune candidature trouvée.</em>
-                    @if (User.IsInRole("Etudiant"))
-                    {
-                        <br />
-                
-                        <br />
-                        <a asp-controller="OffresStages" asp-action="Index" class="btn btn-success">🔍 Voir les offres disponibles</a>
-                    }
-                </td>
-            </tr>
+            <a asp-controller="OffresStages" asp-action="Index" class="btn btn-success mt-3">Parcourir les offres</a>
         }
-    </tbody>
-</table>
+    </div>
+}
