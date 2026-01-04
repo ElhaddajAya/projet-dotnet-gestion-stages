@@ -14,38 +14,14 @@
 <div class="row">
     <div class="col-lg-8">
         <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Créer une nouvelle offre de stage</h5>
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📝 Créer une nouvelle offre de stage</h5>
+                <small>Entreprise : <strong>@ViewBag.NomEntreprise</strong></small>
             </div>
             <div class="card-body">
                 <form asp-action="Create" method="post">
                     @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <!-- Sélection Entreprise (Admin uniquement) -->
-                        <div class="mb-3">
-                            <label asp-for="EntrepriseId" class="form-label">Entreprise *</label>
-                            <select asp-for="EntrepriseId" class="form-select" asp-items="ViewBag.EntrepriseId">
-                                <option value="">-- Sélectionnez une entreprise --</option>
-                            </select>
-                            <span asp-validation-for="EntrepriseId" class="text-danger"></span>
-                        </div>
-                    }
-                    else
-                    {
-                        <!-- Entreprise cachée (auto-remplie pour Entreprise) -->
-                        var selectedValue = (ViewBag.EntrepriseId as SelectList)?.SelectedValue?.ToString() ?? "";
-                        var entrepriseNom = (ViewBag.EntrepriseId as SelectList)?
-                        .FirstOrDefault(x => x.Value == selectedValue)?.Text ?? "";
-
-                        <div class="mb-3">
-                            <label class="form-label">Entreprise</label>
-                            <input type="text" class="form-control" value="@entrepriseNom" readonly style="background-color: #e9ecef;" />
-                            <input type="hidden" asp-for="EntrepriseId" value="@selectedValue" />
-                        </div>
-                    }
 
                     <!-- Titre -->
                     <div class="mb-3">
@@ -57,30 +33,36 @@
                     <!-- Description -->
                     <div class="mb-3">
                         <label asp-for="Description" class="form-label">Description *</label>
-                        <textarea asp-for="Description" class="form-control" rows="5" placeholder="Décrivez les missions, compétences requises, environnement de travail..."></textarea>
+                        <textarea asp-for="Description" class="form-control" rows="6" placeholder="Décrivez les missions, compétences requises, environnement de travail..."></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
 
                     <!-- Durée -->
-                    <div class="mb-3">
-                        <label asp-for="DureeMois" class="form-label">Durée (en mois) *</label>
-                        <input asp-for="DureeMois" type="number" class="form-control" min="1" max="12" placeholder="Ex: 3" />
-                        <span asp-validation-for="DureeMois" class="text-danger"></span>
-                        <small class="text-muted">Entre 1 et 12 mois</small>
-                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DureeMois" class="form-label">Durée (en mois) *</label>
+                            <input asp-for="DureeMois" type="number" class="form-control" min="1" max="12" placeholder="Ex: 3" />
+                            <span asp-validation-for="DureeMois" class="text-danger"></span>
+                            <small class="text-muted">Entre 1 et 12 mois</small>
+                        </div>
 
-                    <!-- Date de début souhaitée -->
-                    <div class="mb-3">
-                        <label asp-for="DateDebutSouhaitee" class="form-label">Date de début souhaitée</label>
-                        <input asp-for="DateDebutSouhaitee" type="date" class="form-control" />
-                        <span asp-validation-for="DateDebutSouhaitee" class="text-danger"></span>
-                        <small class="text-muted">Optionnel - laissez vide si flexible</small>
+                        <!-- Date de début souhaitée -->
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DateDebutSouhaitee" class="form-label">Date de début souhaitée</label>
+                            <input asp-for="DateDebutSouhaitee" type="date" class="form-control" />
+                            <span asp-validation-for="DateDebutSouhaitee" class="text-danger"></span>
+                            <small class="text-muted">Optionnel</small>
+                        </div>
                     </div>
 
                     <!-- Boutons -->
                     <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary">Créer l'offre</button>
-                        <a asp-action="Index" class="btn btn-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Créer l'offre
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
                     </div>
                 </form>
             </div>
@@ -90,14 +72,22 @@
     <div class="col-lg-4">
         <div class="card bg-light">
             <div class="card-body">
-                <h6 class="card-title">💡 Conseils</h6>
+                <h6 class="card-title">💡 Conseils pour une bonne offre</h6>
                 <ul class="small mb-0">
-                    <li>Rédigez un titre clair et accrocheur</li>
-                    <li>Décrivez précisément les missions</li>
-                    <li>Mentionnez les compétences requises</li>
-                    <li>Indiquez l'environnement de travail</li>
-                    <li>Soyez transparent sur les conditions</li>
+                    <li>✅ Rédigez un titre clair et accrocheur</li>
+                    <li>✅ Décrivez précisément les missions</li>
+                    <li>✅ Mentionnez les compétences requises</li>
+                    <li>✅ Indiquez l'environnement de travail</li>
+                    <li>✅ Soyez transparent sur les conditions</li>
+                    <li>✅ Précisez si le stage est rémunéré</li>
                 </ul>
+            </div>
+        </div>
+
+        <div class="card bg-info text-white mt-3">
+            <div class="card-body">
+                <h6 class="card-title">📊 Vos statistiques</h6>
+                <p class="small mb-0">Cette offre sera visible par tous les étudiants une fois publiée.</p>
             </div>
         </div>
     </div>

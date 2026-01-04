@@ -125,6 +125,9 @@ namespace GestionStages.Controllers
                 return RedirectToAction("Index", "Entreprises");
             }
 
+            // Passer le nom de l'entreprise à la vue
+            ViewBag.NomEntreprise = entreprise.Nom;
+
             return View();
         }
 
@@ -132,10 +135,11 @@ namespace GestionStages.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Entreprise")]
-        public async Task<IActionResult> Create([Bind("Id,Titre,Description,DureeMois,DateDebutSouhaitee")] OffresStage offreStage)
+        public async Task<IActionResult> Create([Bind("Titre,Description,DureeMois,DateDebutSouhaitee")] OffresStage offreStage)
         {
             ModelState.Remove("Entreprise");
             ModelState.Remove("EntrepriseId");
+            ModelState.Remove("DatePublication");
 
             // Récupérer l'entreprise connectée
             var userEmail = User.Identity.Name;
@@ -159,6 +163,8 @@ namespace GestionStages.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // En cas d'erreur, repasser le nom
+            ViewBag.NomEntreprise = entreprise.Nom;
             return View(offreStage);
         }
 
@@ -182,6 +188,9 @@ namespace GestionStages.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // Passer le nom de l'entreprise à la vue
+            ViewBag.NomEntreprise = offreStage.Entreprise.Nom;
+
             return View(offreStage);
         }
 
@@ -202,6 +211,7 @@ namespace GestionStages.Controllers
                     _context.Update(offreStage);
                     await _context.SaveChangesAsync();
                     TempData["Success"] = "Offre de stage modifiée avec succès !";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -210,14 +220,19 @@ namespace GestionStages.Controllers
                     else
                         throw;
                 }
-                return RedirectToAction(nameof(Index));
             }
 
+            // En cas d'erreur, recharger l'entreprise
+            var offreReload = await _context.OffresStages
+                .Include(o => o.Entreprise)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            ViewBag.NomEntreprise = offreReload?.Entreprise?.Nom ?? "";
             return View(offreStage);
         }
 
         // GET: OffresStages/Delete/5
-        [Authorize(Roles = "Entreprise")]
+        [Authorize(Roles = "Entreprise,Admin")]  // Admin peut supprimer
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -228,12 +243,15 @@ namespace GestionStages.Controllers
 
             if (offreStage == null) return NotFound();
 
-            // Vérifier que l'entreprise supprime bien sa propre offre
-            var userEmail = User.Identity.Name;
-            if (offreStage.Entreprise.EmailContact != userEmail)
+            // Vérifier que l'entreprise supprime bien sa propre offre (sauf Admin)
+            if (User.IsInRole("Entreprise"))
             {
-                TempData["Error"] = "Vous ne pouvez supprimer que vos propres offres.";
-                return RedirectToAction(nameof(Index));
+                var userEmail = User.Identity.Name;
+                if (offreStage.Entreprise.EmailContact != userEmail)
+                {
+                    TempData["Error"] = "Vous ne pouvez supprimer que vos propres offres.";
+                    return RedirectToAction(nameof(Index));
+                }
             }
 
             return View(offreStage);
@@ -242,7 +260,7 @@ namespace GestionStages.Controllers
         // POST: OffresStages/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Entreprise")]
+        [Authorize(Roles = "Entreprise,Admin")]  // Admin peut supprimer
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var offreStage = await _context.OffresStages.FindAsync(id);

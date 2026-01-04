@@ -15,39 +15,17 @@
 <div class="row">
     <div class="col-lg-8">
         <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Modifier l'offre : @Model.Titre</h5>
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">✏️ Modifier l'offre : @Model.Titre</h5>
+                <small>Entreprise : <strong>@ViewBag.NomEntreprise</strong></small>
             </div>
             <div class="card-body">
                 <form asp-action="Edit" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="EntrepriseId" />
+                    <input type="hidden" asp-for="DatePublication" />
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <!-- Sélection Entreprise (Admin uniquement) -->
-                        <div class="mb-3">
-                            <label asp-for="EntrepriseId" class="form-label">Entreprise *</label>
-                            <select asp-for="EntrepriseId" class="form-select" asp-items="ViewBag.EntrepriseId">
-                                <option value="">-- Sélectionnez une entreprise --</option>
-                            </select>
-                            <span asp-validation-for="EntrepriseId" class="text-danger"></span>
-                        </div>
-                    }
-                    else
-                    {
-                        <!-- Entreprise en lecture seule (Entreprise ne peut pas changer) -->
-                        var selectedValue = (ViewBag.EntrepriseId as SelectList)?.SelectedValue?.ToString() ?? "";
-                        var entrepriseNom = (ViewBag.EntrepriseId as SelectList)?
-                        .FirstOrDefault(x => x.Value == selectedValue)?.Text ?? "";
-
-                        <div class="mb-3">
-                            <label class="form-label">Entreprise</label>
-                            <input type="text" class="form-control" value="@entrepriseNom" readonly style="background-color: #e9ecef;" />
-                            <input type="hidden" asp-for="EntrepriseId" value="@selectedValue" />
-                        </div>
-                    }
 
                     <!-- Titre -->
                     <div class="mb-3">
@@ -59,28 +37,43 @@
                     <!-- Description -->
                     <div class="mb-3">
                         <label asp-for="Description" class="form-label">Description *</label>
-                        <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                        <textarea asp-for="Description" class="form-control" rows="6"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
 
-                    <!-- Durée -->
-                    <div class="mb-3">
-                        <label asp-for="DureeMois" class="form-label">Durée (en mois) *</label>
-                        <input asp-for="DureeMois" type="number" class="form-control" min="1" max="12" />
-                        <span asp-validation-for="DureeMois" class="text-danger"></span>
+                    <!-- Durée et Date -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DureeMois" class="form-label">Durée (en mois) *</label>
+                            <input asp-for="DureeMois" type="number" class="form-control" min="1" max="12" />
+                            <span asp-validation-for="DureeMois" class="text-danger"></span>
+                            <small class="text-muted">Entre 1 et 12 mois</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DateDebutSouhaitee" class="form-label">Date de début souhaitée</label>
+                            <input asp-for="DateDebutSouhaitee" type="date" class="form-control"
+                                   value="@(Model.DateDebutSouhaitee.HasValue? Model.DateDebutSouhaitee.Value.ToString("yyyy-MM-dd") : "")" />
+                            <span asp-validation-for="DateDebutSouhaitee" class="text-danger"></span>
+                            <small class="text-muted">Optionnel</small>
+                        </div>
                     </div>
 
-                    <!-- Date de début souhaitée -->
-                    <div class="mb-3">
-                        <label asp-for="DateDebutSouhaitee" class="form-label">Date de début souhaitée</label>
-                        <input asp-for="DateDebutSouhaitee" type="date" class="form-control" />
-                        <span asp-validation-for="DateDebutSouhaitee" class="text-danger"></span>
+                    <!-- Informations en lecture seule -->
+                    <div class="alert alert-light border">
+                        <small class="text-muted">
+                            📅 <strong>Date de publication :</strong> @Model.DatePublication.ToString("dd/MM/yyyy à HH:mm")
+                        </small>
                     </div>
 
                     <!-- Boutons -->
                     <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-warning">Enregistrer les modifications</button>
-                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-save"></i> Enregistrer les modifications
+                        </button>
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
                     </div>
                 </form>
             </div>
@@ -95,10 +88,18 @@
 
         <div class="card">
             <div class="card-body">
-                <h6 class="card-title">Actions rapides</h6>
+                <h6 class="card-title">📋 Actions rapides</h6>
                 <div class="d-grid gap-2">
-                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">👁️ Voir l'offre</a>
-                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">🗑️ Supprimer</a>
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">
+                        👁️ Voir l'offre
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                        📋 Retour à la liste
+                    </a>
+                    <hr />
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">
+                        🗑️ Supprimer cette offre
+                    </a>
                 </div>
             </div>
         </div>
