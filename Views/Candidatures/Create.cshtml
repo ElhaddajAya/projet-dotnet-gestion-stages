@@ -1,68 +1,148 @@
-@model GestionStages.Models.Candidature
-
 @{
     ViewData["Title"] = "Postuler";
+    var offre = ViewBag.Offre as GestionStages.Models.OffresStage;
+    var etudiant = ViewBag.Etudiant as GestionStages.Models.Etudiant;
 }
 
-<h1>Postuler à une offre de stage</h1>
-<hr />
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="OffresStages" asp-action="Index">Offres de stage</a></li>
+        <li class="breadcrumb-item"><a asp-controller="OffresStages" asp-action="Details" asp-route-id="@offre.Id">Offre #@offre.Id</a></li>
+        <li class="breadcrumb-item active">Postuler</li>
+    </ol>
+</nav>
 
 <div class="row">
-    <div class="col-md-8">
-        <form method="post" action="/Candidatures/Create" enctype="multipart/form-data">
-            @Html.AntiForgeryToken()
-
-            @if (User.IsInRole("Etudiant"))
-            {
-                <!-- Pour l'étudiant : afficher l'offre en texte readonly -->
-                <div class="form-group mb-3">
-                    <label class="control-label">Offre de stage *</label>
-                    @{
-                        var selectedValue = (ViewBag.OffreStageId as SelectList)?.SelectedValue?.ToString() ?? "";
-                        var offerText = (ViewBag.OffreStageId as SelectList)?
-                            .FirstOrDefault(x => x.Value == selectedValue)?.Text ?? "Aucune offre";
-                    }
-                    <input type="text" class="form-control" value="@offerText" readonly style="background-color: #e9ecef;" />
-                    <input type="hidden" name="OffreStageId" value="@selectedValue" />
-                </div>
-            }
-            else
-            {
-                <!-- Pour l'admin : sélection normale -->
-                <div class="form-group mb-3">
-                    <label class="control-label">Offre de stage *</label>
-                    <select name="OffreStageId" class="form-control" required>
-                        <option value="">-- Sélectionnez une offre --</option>
-                        @foreach (var item in ViewBag.OffreStageId as SelectList)
-                        {
-                            <option value="@item.Value" selected="@item.Selected">@item.Text</option>
-                        }
-                    </select>
-                </div>
-            }
-
-            <!-- Champs cachés -->
-            <input type="hidden" name="DateCandidature" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
-            <input type="hidden" name="Statut" value="En attente" />
-
-            <!-- Upload CV -->
-            <div class="form-group mb-3">
-                <label for="cvFile" class="control-label">Curriculum Vitae (CV)</label>
-                <input type="file" 
-                       id="cvFile"
-                       name="cvFile" 
-                       class="form-control" 
-                       accept=".pdf,.doc,.docx" />
-                <small class="form-text text-muted">
-                    Formats acceptés : PDF, Word (.doc, .docx) • Taille maximale : 5 Mo
-                </small>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">✉️ Postuler à une offre de stage</h5>
             </div>
+            <div class="card-body">
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>⚠</strong> @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
 
-            <!-- Boutons -->
-            <div class="form-group mt-4">
-                <button type="submit" class="btn btn-success">Postuler</button>
-                <a href="/Candidatures/Index" class="btn btn-secondary">Retour</a>
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="offreId" value="@offre.Id" />
+
+                    <!-- Informations de l'offre -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary">📋 Offre sélectionnée</h6>
+                            <p class="mb-1"><strong>Titre :</strong> @offre.Titre</p>
+                            <p class="mb-1"><strong>Entreprise :</strong> @offre.Entreprise.Nom</p>
+                            <p class="mb-1"><strong>Secteur :</strong> @offre.Entreprise.Secteur</p>
+                            <p class="mb-0"><strong>Durée :</strong> @offre.DureeMois mois</p>
+                        </div>
+                    </div>
+
+                    <!-- Informations du candidat -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary">👤 Vos informations</h6>
+                            <p class="mb-1"><strong>Nom :</strong> @etudiant.Prenom @etudiant.Nom</p>
+                            <p class="mb-1"><strong>Email :</strong> @etudiant.Email</p>
+                            <p class="mb-1"><strong>Filière :</strong> @etudiant.Filiere</p>
+                            <p class="mb-0"><strong>Niveau :</strong> @etudiant.Niveau</p>
+                        </div>
+                    </div>
+
+                    <!-- Upload CV -->
+                    <div class="mb-4">
+                        <label for="cvFile" class="form-label">
+                            📄 Votre CV (obligatoire) *
+                        </label>
+                        <input type="file"
+                               class="form-control"
+                               id="cvFile"
+                               name="cvFile"
+                               accept=".pdf"
+                               required />
+                        <div class="form-text">
+                            Format accepté : PDF uniquement • Taille maximale : 10 Mo
+                        </div>
+                    </div>
+
+                    <!-- Message d'information -->
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">ℹ️ À savoir</h6>
+                        <ul class="mb-0 small">
+                            <li>Votre candidature sera envoyée immédiatement à l'entreprise</li>
+                            <li>Vous recevrez une notification dès que l'entreprise examinera votre candidature</li>
+                            <li>Vous pourrez suivre le statut de votre candidature dans "Mes candidatures"</li>
+                            <li>Vous ne pouvez postuler qu'une seule fois à la même offre</li>
+                        </ul>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-send"></i> Envoyer ma candidature
+                        </button>
+                        <a asp-controller="OffresStages" asp-action="Details" asp-route-id="@offre.Id" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card bg-warning text-dark mb-3">
+            <div class="card-body">
+                <h6 class="card-title">⚠️ Conseils importants</h6>
+                <ul class="small mb-0">
+                    <li>✅ Vérifiez que votre CV est à jour</li>
+                    <li>✅ Assurez-vous qu'il est au format PDF</li>
+                    <li>✅ Relisez votre CV avant l'envoi</li>
+                    <li>✅ Vérifiez vos coordonnées</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">📊 Description de l'offre</h6>
+                <p class="small text-muted">@offre.Description</p>
+                @if (offre.DateDebutSouhaitee.HasValue)
+                {
+                    <hr />
+                    <p class="small mb-0">
+                        <strong>Date de début souhaitée :</strong><br />
+                        @offre.DateDebutSouhaitee.Value.ToString("dd/MM/yyyy")
+                    </p>
+                }
+            </div>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Validation de fichier côté client
+        document.getElementById('cvFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Vérifier l'extension
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('⚠️ Seuls les fichiers PDF sont acceptés.');
+                    e.target.value = '';
+                    return;
+                }
+                // Vérifier la taille (10 Mo max)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('⚠️ La taille du fichier ne doit pas dépasser 10 Mo.');
+                    e.target.value = '';
+                    return;
+                }
+            }
+        });
+    </script>
+}

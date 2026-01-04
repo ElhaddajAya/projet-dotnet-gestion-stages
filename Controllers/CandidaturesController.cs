@@ -15,67 +15,106 @@ namespace GestionStages.Controllers
     public class CandidaturesController : Controller
     {
         private readonly StagesDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public CandidaturesController(StagesDbContext context)
+        public CandidaturesController(StagesDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
-        // GET: Candidatures/Index
-        [Authorize(Roles = "Admin,Etudiant,Entreprise")]
-        public async Task<IActionResult> Index()
+        // GET: Candidatures
+        // AVEC RECHERCHE ET FILTRAGE
+        public async Task<IActionResult> Index(string searchString, string statutFilter)
         {
-            if (User.IsInRole("Admin"))
-            {
-                var toutesCandidatures = _context.Candidatures
-                    .Include(c => c.Etudiant)
-                    .Include(c => c.OffreStage);
-                return View(await toutesCandidatures.ToListAsync());
-            }
+            // Requête de base avec toutes les relations
+            var candidaturesQuery = _context.Candidatures
+                .Include(c => c.Etudiant)
+                .Include(c => c.OffreStage)
+                    .ThenInclude(o => o.Entreprise)
+                .AsQueryable();
 
+            // FILTRAGE PAR RÔLE
             if (User.IsInRole("Etudiant"))
             {
+                // L'étudiant voit uniquement ses candidatures
                 var userEmail = User.Identity.Name;
                 var etudiant = await _context.Etudiants
                     .FirstOrDefaultAsync(e => e.Email == userEmail);
 
-                if (etudiant == null)
+                if (etudiant != null)
                 {
-                    return View(await _context.Candidatures.Where(c => false).ToListAsync());
+                    candidaturesQuery = candidaturesQuery.Where(c => c.EtudiantId == etudiant.Id);
                 }
-
-                var candidaturesEtudiant = _context.Candidatures
-                    .Include(c => c.Etudiant)
-                    .Include(c => c.OffreStage)
-                    .Where(c => c.EtudiantId == etudiant.Id);
-
-                return View(await candidaturesEtudiant.ToListAsync());
             }
-
-            if (User.IsInRole("Entreprise"))
+            else if (User.IsInRole("Entreprise"))
             {
+                // L'entreprise voit les candidatures pour ses offres
                 var userEmail = User.Identity.Name;
                 var entreprise = await _context.Entreprises
                     .FirstOrDefaultAsync(e => e.EmailContact == userEmail);
 
-                if (entreprise == null)
+                if (entreprise != null)
                 {
-                    return View(await _context.Candidatures.Where(c => false).ToListAsync());
+                    candidaturesQuery = candidaturesQuery.Where(c => c.OffreStage.EntrepriseId == entreprise.Id);
                 }
+            }
+            // Admin voit toutes les candidatures
 
-                var candidaturesRecues = _context.Candidatures
-                    .Include(c => c.Etudiant)
-                    .Include(c => c.OffreStage)
-                    .Where(c => c.OffreStage.EntrepriseId == entreprise.Id);
-
-                return View(await candidaturesRecues.ToListAsync());
+            // RECHERCHE PAR MOTS-CLÉS
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                if (User.IsInRole("Etudiant"))
+                {
+                    // Étudiant : chercher dans titre offre et nom entreprise
+                    candidaturesQuery = candidaturesQuery.Where(c =>
+                        c.OffreStage.Titre.Contains(searchString) ||
+                        c.OffreStage.Entreprise.Nom.Contains(searchString)
+                    );
+                }
+                else if (User.IsInRole("Entreprise"))
+                {
+                    // Entreprise : chercher dans nom étudiant et filière
+                    candidaturesQuery = candidaturesQuery.Where(c =>
+                        c.Etudiant.Nom.Contains(searchString) ||
+                        c.Etudiant.Prenom.Contains(searchString) ||
+                        c.Etudiant.Filiere.Contains(searchString)
+                    );
+                }
+                else if (User.IsInRole("Admin"))
+                {
+                    // Admin : chercher partout
+                    candidaturesQuery = candidaturesQuery.Where(c =>
+                        c.Etudiant.Nom.Contains(searchString) ||
+                        c.Etudiant.Prenom.Contains(searchString) ||
+                        c.OffreStage.Titre.Contains(searchString) ||
+                        c.OffreStage.Entreprise.Nom.Contains(searchString)
+                    );
+                }
             }
 
-            return View(await _context.Candidatures.Include(c => c.Etudiant).Include(c => c.OffreStage).ToListAsync());
+            // FILTRE PAR STATUT
+            if (!string.IsNullOrEmpty(statutFilter))
+            {
+                candidaturesQuery = candidaturesQuery.Where(c => c.Statut == statutFilter);
+            }
+
+            // TRI PAR DATE (plus récentes en premier)
+            candidaturesQuery = candidaturesQuery.OrderByDescending(c => c.DateCandidature);
+
+            // PRÉPARER LES DONNÉES POUR LES FILTRES
+            // Liste des statuts possibles
+            var statuts = new List<string> { "En attente", "Acceptée", "Refusée" };
+            ViewBag.Statuts = statuts;
+
+            // Conserver les valeurs des filtres
+            ViewBag.CurrentSearch = searchString;
+            ViewBag.CurrentStatut = statutFilter;
+
+            return View(await candidaturesQuery.ToListAsync());
         }
 
         // GET: Candidatures/Details/5
-        [Authorize(Roles = "Admin,Etudiant,Entreprise")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -88,107 +127,67 @@ namespace GestionStages.Controllers
 
             if (candidature == null) return NotFound();
 
+            // Vérifier les permissions
             if (User.IsInRole("Etudiant"))
             {
                 var userEmail = User.Identity.Name;
-                var etudiant = await _context.Etudiants.FirstOrDefaultAsync(e => e.Email == userEmail);
-                if (etudiant == null || candidature.EtudiantId != etudiant.Id) return Forbid();
+                if (candidature.Etudiant.Email != userEmail)
+                {
+                    TempData["Error"] = "Accès non autorisé.";
+                    return RedirectToAction(nameof(Index));
+                }
             }
             else if (User.IsInRole("Entreprise"))
             {
                 var userEmail = User.Identity.Name;
-                var entreprise = await _context.Entreprises.FirstOrDefaultAsync(e => e.EmailContact == userEmail);
-                if (entreprise == null || candidature.OffreStage.EntrepriseId != entreprise.Id) return Forbid();
+                if (candidature.OffreStage.Entreprise.EmailContact != userEmail)
+                {
+                    TempData["Error"] = "Accès non autorisé.";
+                    return RedirectToAction(nameof(Index));
+                }
             }
-
-            // Charger la convention associée si elle existe
-            var convention = await _context.Conventions
-                .FirstOrDefaultAsync(c => c.CandidatureId == candidature.Id);
-
-            ViewBag.Convention = convention;
 
             return View(candidature);
         }
 
-        // POST: Candidatures/Accepter
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Entreprise")]
-        public async Task<IActionResult> Accepter(int id)
-        {
-            var candidature = await _context.Candidatures
-                .Include(c => c.OffreStage)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (candidature == null) return NotFound();
-
-            if (User.IsInRole("Entreprise"))
-            {
-                var userEmail = User.Identity.Name;
-                var entreprise = await _context.Entreprises.FirstOrDefaultAsync(e => e.EmailContact == userEmail);
-                if (entreprise == null || candidature.OffreStage.EntrepriseId != entreprise.Id) return Forbid();
-            }
-
-            candidature.Statut = "Acceptée";
-            _context.Update(candidature);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "✓ Candidature acceptée avec succès !";
-            return RedirectToAction(nameof(Details), new { id = id });
-        }
-
-        // POST: Candidatures/Refuser
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Entreprise")]
-        public async Task<IActionResult> Refuser(int id)
-        {
-            var candidature = await _context.Candidatures
-                .Include(c => c.OffreStage)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (candidature == null) return NotFound();
-
-            if (User.IsInRole("Entreprise"))
-            {
-                var userEmail = User.Identity.Name;
-                var entreprise = await _context.Entreprises.FirstOrDefaultAsync(e => e.EmailContact == userEmail);
-                if (entreprise == null || candidature.OffreStage.EntrepriseId != entreprise.Id) return Forbid();
-            }
-
-            candidature.Statut = "Refusée";
-            _context.Update(candidature);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "✗ Candidature refusée.";
-            return RedirectToAction(nameof(Details), new { id = id });
-        }
-
         // GET: Candidatures/Create
-        [Authorize(Roles = "Admin,Etudiant")]
+        [Authorize(Roles = "Etudiant")]
         public async Task<IActionResult> Create(int? offreId)
         {
-            if (User.IsInRole("Etudiant"))
-            {
-                var userEmail = User.Identity.Name;
-                var etudiant = await _context.Etudiants.FirstOrDefaultAsync(e => e.Email == userEmail);
+            if (offreId == null) return RedirectToAction("Index", "OffresStages");
 
-                if (etudiant == null)
-                {
-                    TempData["Error"] = "Veuillez d'abord compléter votre profil étudiant.";
-                    return RedirectToAction("Index", "Etudiants");
-                }
+            var offre = await _context.OffresStages
+                .Include(o => o.Entreprise)
+                .FirstOrDefaultAsync(o => o.Id == offreId);
 
-                ViewData["EtudiantId"] = new SelectList(new[] { etudiant }, "Id", "Nom", etudiant.Id);
-            }
-            else
+            if (offre == null)
             {
-                ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Nom");
+                TempData["Error"] = "Offre introuvable.";
+                return RedirectToAction("Index", "OffresStages");
             }
 
-            ViewData["OffreStageId"] = offreId.HasValue
-                ? new SelectList(_context.OffresStages, "Id", "Titre", offreId.Value)
-                : new SelectList(_context.OffresStages, "Id", "Titre");
+            // Vérifier si l'étudiant a déjà postulé
+            var userEmail = User.Identity.Name;
+            var etudiant = await _context.Etudiants
+                .FirstOrDefaultAsync(e => e.Email == userEmail);
+
+            if (etudiant == null)
+            {
+                TempData["Error"] = "Profil étudiant introuvable. Veuillez compléter votre profil.";
+                return RedirectToAction("Index", "Etudiants");
+            }
+
+            var existeCandidature = await _context.Candidatures
+                .AnyAsync(c => c.EtudiantId == etudiant.Id && c.OffreStageId == offreId);
+
+            if (existeCandidature)
+            {
+                TempData["Error"] = "Vous avez déjà postulé à cette offre.";
+                return RedirectToAction("Details", "OffresStages", new { id = offreId });
+            }
+
+            ViewBag.Offre = offre;
+            ViewBag.Etudiant = etudiant;
 
             return View();
         }
@@ -196,139 +195,145 @@ namespace GestionStages.Controllers
         // POST: Candidatures/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Etudiant")]
-        public async Task<IActionResult> Create([Bind("Id,DateCandidature,Statut,EtudiantId,OffreStageId,CheminCV")] Candidature candidature, IFormFile? cvFile)
+        [Authorize(Roles = "Etudiant")]
+        public async Task<IActionResult> Create(int offreId, IFormFile cvFile)
         {
-            if (User.IsInRole("Etudiant"))
+            // Vérifier que l'offre existe
+            var offre = await _context.OffresStages
+                .Include(o => o.Entreprise)
+                .FirstOrDefaultAsync(o => o.Id == offreId);
+
+            if (offre == null)
             {
-                var userEmail = User.Identity.Name;
-                var etudiant = await _context.Etudiants.FirstOrDefaultAsync(e => e.Email == userEmail);
-                if (etudiant == null) return Forbid();
-                candidature.EtudiantId = etudiant.Id;
+                TempData["Error"] = "Offre introuvable.";
+                return RedirectToAction("Index", "OffresStages");
             }
 
-            if (candidature.DateCandidature == default(DateTime))
+            var userEmail = User.Identity.Name;
+            var etudiant = await _context.Etudiants
+                .FirstOrDefaultAsync(e => e.Email == userEmail);
+
+            if (etudiant == null)
             {
-                candidature.DateCandidature = DateTime.Now;
+                TempData["Error"] = "Profil étudiant introuvable.";
+                return RedirectToAction("Index", "Etudiants");
             }
 
-            if (string.IsNullOrEmpty(candidature.Statut))
+            // Validation du CV
+            if (cvFile == null || cvFile.Length == 0)
             {
-                candidature.Statut = "En attente";
+                TempData["Error"] = "Veuillez téléverser votre CV.";
+                ViewBag.Offre = offre;
+                ViewBag.Etudiant = etudiant;
+                return View();
             }
 
-            if (cvFile != null && cvFile.Length > 0)
+            // Vérifier l'extension
+            var extension = Path.GetExtension(cvFile.FileName).ToLowerInvariant();
+            if (extension != ".pdf")
             {
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "cv");
-                Directory.CreateDirectory(uploadsFolder);
-                var uniqueFileName = $"{Guid.NewGuid()}_{cvFile.FileName}";
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await cvFile.CopyToAsync(stream);
-                }
-
-                candidature.CheminCV = $"/uploads/cv/{uniqueFileName}";
+                TempData["Error"] = "Seuls les fichiers PDF sont acceptés.";
+                ViewBag.Offre = offre;
+                ViewBag.Etudiant = etudiant;
+                return View();
             }
 
-            ModelState.Remove("Etudiant");
-            ModelState.Remove("OffreStage");
-
-            if (ModelState.IsValid)
+            // Vérifier la taille (max 10 Mo)
+            if (cvFile.Length > 10 * 1024 * 1024)
             {
-                _context.Add(candidature);
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] = "Candidature créée avec succès !";
-                return RedirectToAction(nameof(Index));
+                TempData["Error"] = "La taille du fichier ne doit pas dépasser 10 Mo.";
+                ViewBag.Offre = offre;
+                ViewBag.Etudiant = etudiant;
+                return View();
             }
 
-            if (User.IsInRole("Etudiant"))
+            // Enregistrer le fichier
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "cv");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = $"{Guid.NewGuid()}_{cvFile.FileName}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
             {
-                var userEmail = User.Identity.Name;
-                var etudiant = await _context.Etudiants.FirstOrDefaultAsync(e => e.Email == userEmail);
-                if (etudiant != null) ViewData["EtudiantId"] = new SelectList(new[] { etudiant }, "Id", "Nom", candidature.EtudiantId);
-            }
-            else
-            {
-                ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Nom", candidature.EtudiantId);
+                await cvFile.CopyToAsync(stream);
             }
 
-            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Titre", candidature.OffreStageId);
-            return View(candidature);
+            // Créer la candidature
+            var candidature = new Candidature
+            {
+                EtudiantId = etudiant.Id,
+                OffreStageId = offreId,
+                DateCandidature = DateTime.Now,
+                Statut = "En attente",
+                CheminCV = $"/uploads/cv/{uniqueFileName}"
+            };
+
+            _context.Add(candidature);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Candidature envoyée avec succès !";
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Candidatures/Edit/5
-        [Authorize(Roles = "Admin,Entreprise")]
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null) return NotFound();
-            var candidature = await _context.Candidatures.Include(c => c.OffreStage).FirstOrDefaultAsync(c => c.Id == id);
-            if (candidature == null) return NotFound();
-
-            if (User.IsInRole("Entreprise"))
-            {
-                var userEmail = User.Identity.Name;
-                var entreprise = await _context.Entreprises.FirstOrDefaultAsync(e => e.EmailContact == userEmail);
-                if (entreprise == null || candidature.OffreStage.EntrepriseId != entreprise.Id) return Forbid();
-                ViewData["ReadOnly"] = true;
-            }
-
-            ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Nom", candidature.EtudiantId);
-            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Titre", candidature.OffreStageId);
-            return View(candidature);
-        }
-
-        // POST: Candidatures/Edit/5
+        // POST: Candidatures/Accept/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Entreprise")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,DateCandidature,Statut,EtudiantId,OffreStageId,CheminCV")] Candidature candidature)
+        [Authorize(Roles = "Entreprise")]
+        public async Task<IActionResult> Accept(int id)
         {
-            if (id != candidature.Id) return NotFound();
+            var candidature = await _context.Candidatures
+                .Include(c => c.OffreStage)
+                    .ThenInclude(o => o.Entreprise)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
-            var candidatureOriginale = await _context.Candidatures.Include(c => c.OffreStage).AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
-            if (candidatureOriginale == null) return NotFound();
+            if (candidature == null) return NotFound();
 
-            if (User.IsInRole("Entreprise"))
+            // Vérifier que c'est bien l'entreprise propriétaire
+            var userEmail = User.Identity.Name;
+            if (candidature.OffreStage.Entreprise.EmailContact != userEmail)
             {
-                var userEmail = User.Identity.Name;
-                var entreprise = await _context.Entreprises.FirstOrDefaultAsync(e => e.EmailContact == userEmail);
-                if (entreprise == null || candidatureOriginale.OffreStage.EntrepriseId != entreprise.Id) return Forbid();
-
-                candidature.EtudiantId = candidatureOriginale.EtudiantId;
-                candidature.OffreStageId = candidatureOriginale.OffreStageId;
-                candidature.DateCandidature = candidatureOriginale.DateCandidature;
-                candidature.CheminCV = candidatureOriginale.CheminCV;
-            }
-
-            ModelState.Remove("Etudiant");
-            ModelState.Remove("OffreStage");
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(candidature);
-                    await _context.SaveChangesAsync();
-                    TempData["Success"] = "Candidature modifiée avec succès !";
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CandidatureExists(candidature.Id)) return NotFound();
-                    else throw;
-                }
+                TempData["Error"] = "Accès non autorisé.";
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["EtudiantId"] = new SelectList(_context.Etudiants, "Id", "Nom", candidature.EtudiantId);
-            ViewData["OffreStageId"] = new SelectList(_context.OffresStages, "Id", "Titre", candidature.OffreStageId);
-            return View(candidature);
+            candidature.Statut = "Acceptée";
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Candidature acceptée avec succès !";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // POST: Candidatures/Reject/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Entreprise")]
+        public async Task<IActionResult> Reject(int id)
+        {
+            var candidature = await _context.Candidatures
+                .Include(c => c.OffreStage)
+                    .ThenInclude(o => o.Entreprise)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (candidature == null) return NotFound();
+
+            // Vérifier que c'est bien l'entreprise propriétaire
+            var userEmail = User.Identity.Name;
+            if (candidature.OffreStage.Entreprise.EmailContact != userEmail)
+            {
+                TempData["Error"] = "Accès non autorisé.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            candidature.Statut = "Refusée";
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Candidature refusée.";
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         // GET: Candidatures/Delete/5
-        [Authorize(Roles = "Admin,Etudiant")]
+        [Authorize(Roles = "Etudiant,Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -336,15 +341,20 @@ namespace GestionStages.Controllers
             var candidature = await _context.Candidatures
                 .Include(c => c.Etudiant)
                 .Include(c => c.OffreStage)
+                    .ThenInclude(o => o.Entreprise)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (candidature == null) return NotFound();
 
+            // Vérifier les permissions
             if (User.IsInRole("Etudiant"))
             {
                 var userEmail = User.Identity.Name;
-                var etudiant = await _context.Etudiants.FirstOrDefaultAsync(e => e.Email == userEmail);
-                if (etudiant == null || candidature.EtudiantId != etudiant.Id) return Forbid();
+                if (candidature.Etudiant.Email != userEmail)
+                {
+                    TempData["Error"] = "Vous ne pouvez supprimer que vos propres candidatures.";
+                    return RedirectToAction(nameof(Index));
+                }
             }
 
             return View(candidature);
@@ -353,37 +363,28 @@ namespace GestionStages.Controllers
         // POST: Candidatures/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Etudiant")]
+        [Authorize(Roles = "Etudiant,Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var candidature = await _context.Candidatures.Include(c => c.Etudiant).FirstOrDefaultAsync(c => c.Id == id);
-
+            var candidature = await _context.Candidatures.FindAsync(id);
             if (candidature != null)
             {
-                if (User.IsInRole("Etudiant"))
-                {
-                    var userEmail = User.Identity.Name;
-                    var etudiant = await _context.Etudiants.FirstOrDefaultAsync(e => e.Email == userEmail);
-                    if (etudiant == null || candidature.EtudiantId != etudiant.Id) return Forbid();
-                }
-
+                // Supprimer le fichier CV
                 if (!string.IsNullOrEmpty(candidature.CheminCV))
                 {
-                    var cvPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", candidature.CheminCV.TrimStart('/'));
-                    if (System.IO.File.Exists(cvPath)) System.IO.File.Delete(cvPath);
+                    var cvPath = Path.Combine(_environment.WebRootPath, candidature.CheminCV.TrimStart('/'));
+                    if (System.IO.File.Exists(cvPath))
+                    {
+                        System.IO.File.Delete(cvPath);
+                    }
                 }
 
                 _context.Candidatures.Remove(candidature);
                 await _context.SaveChangesAsync();
-                TempData["Success"] = "Candidature annulée avec succès !";
+                TempData["Success"] = "Candidature supprimée avec succès !";
             }
 
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool CandidatureExists(int id)
-        {
-            return _context.Candidatures.Any(e => e.Id == id);
         }
     }
 }
