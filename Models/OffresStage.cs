@@ -12,6 +12,11 @@ namespace GestionStages.Models
         [Required(ErrorMessage = "La description est obligatoire")]
         public string Description { get; set; } = string.Empty;
 
+        [Required]
+        [Display(Name = "Date de publication")]
+        [DataType(DataType.DateTime)]
+        public DateTime DatePublication { get; set; } = DateTime.Now;
+
         [Required(ErrorMessage = "La durée est obligatoire")]
         public int DureeMois { get; set; }
 

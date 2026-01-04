@@ -4,46 +4,186 @@
     ViewData["Title"] = "Offres de stage";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>@(User.IsInRole("Entreprise") ? "Mes offres de stage" : "Offres de stage")</h1>
-    @if (User.IsInRole("Admin") || User.IsInRole("Entreprise"))
-    {
-        <a asp-action="Create" class="btn btn-success">+ Créer une offre</a>
-    }
-</div>
-
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show">
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            @if (User.IsInRole("Entreprise"))
+            {
+                <text>📋 Mes offres de stage</text>
+            }
+            else
+            {
+                <text>🔍 Offres de stage disponibles</text>
+            }
+        </h2>
+        @if (User.IsInRole("Entreprise"))
+        {
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Créer une offre
+            </a>
+        }
     </div>
-}
 
-@if (Model != null && Model.Any())
-{
-    @if (User.IsInRole("Etudiant") || !User.Identity.IsAuthenticated)
+    @if (TempData["Success"] != null)
     {
-        <div class="row g-4">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>✓</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>⚠</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- FORMULAIRE DE RECHERCHE ET FILTRAGE -->
+    @if (!User.IsInRole("Entreprise"))
+    {
+        <div class="card mb-4">
+            <div class="card-body">
+                <form asp-action="Index" method="get">
+                    <div class="row g-3">
+                        <!-- Barre de recherche -->
+                        <div class="col-md-4">
+                            <label class="form-label">🔎 Rechercher</label>
+                            <input type="text"
+                                   name="searchString"
+                                   value="@ViewBag.CurrentSearch"
+                                   class="form-control"
+                                   placeholder="Titre, description, entreprise..." />
+                        </div>
+
+                        <!-- Filtre par secteur -->
+                        <div class="col-md-3">
+                            <label class="form-label">🏢 Secteur</label>
+                            <select name="secteurFilter" class="form-select">
+                                <option value="">Tous les secteurs</option>
+                                @foreach (var secteur in ViewBag.Secteurs)
+                                {
+                                    <option value="@secteur" selected="@(secteur == ViewBag.CurrentSecteur)">
+                                        @secteur
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Filtre par durée -->
+                        <div class="col-md-3">
+                            <label class="form-label">⏱️ Durée (mois)</label>
+                            <select name="dureeFilter" class="form-select">
+                                <option value="">Toutes les durées</option>
+                                @foreach (var duree in ViewBag.Durees)
+                                {
+                                    <option value="@duree" selected="@(duree == ViewBag.CurrentDuree)">
+                                        @duree mois
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="btn-group w-100" role="group">
+                                <button type="submit" class="btn btn-primary">
+                                    Filtrer
+                                </button>
+                                <a asp-action="Index" class="btn btn-outline-secondary" title="Réinitialiser">
+                                    ↺
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Affichage du nombre de résultats -->
+        @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch) ||
+            !string.IsNullOrEmpty(ViewBag.CurrentSecteur) ||
+            ViewBag.CurrentDuree != null)
+        {
+            <div class="alert alert-info">
+                <strong>@Model.Count()</strong> offre(s) trouvée(s)
+            </div>
+        }
+    }
+
+    <!-- LISTE DES OFFRES -->
+    @if (Model.Any())
+    {
+        <div class="row">
             @foreach (var offre in Model)
             {
-                <div class="col-md-6 col-lg-4">
-                    <div class="card h-100">
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title">@offre.Titre</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">@offre.Entreprise.Nom</h6>
-                            <p class="card-text">@(offre.Description.Length > 100 ? offre.Description.Substring(0, 100) + "..." : offre.Description)</p>
-                            <ul class="list-unstyled small text-muted">
-                                <li><strong>Durée :</strong> @offre.DureeMois mois</li>
-                                <li><strong>Début :</strong> @(offre.DateDebutSouhaitee?.ToString("dd/MM/yyyy") ?? "Flexible")</li>
-                            </ul>
-                        </div>
-                        <div class="card-footer bg-transparent">
-                            <a asp-action="Details" asp-route-id="@offre.Id" class="btn btn-sm btn-outline-primary">Détails</a>
-                            @if (User.IsInRole("Etudiant"))
-                            {
-                                <a asp-controller="Candidatures" asp-action="Create" asp-route-offreId="@offre.Id" class="btn btn-sm btn-success">Postuler</a>
-                            }
+                            <!-- En-tête avec entreprise -->
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">@offre.Titre</h5>
+                                <span class="badge bg-primary">@offre.DureeMois mois</span>
+                            </div>
+
+                            <!-- Entreprise et secteur -->
+                            <h6 class="card-subtitle mb-2 text-muted">
+                                🏢 @offre.Entreprise.Nom
+                                @if (!string.IsNullOrEmpty(offre.Entreprise.Secteur))
+                                {
+                                    <small class="text-muted">• @offre.Entreprise.Secteur</small>
+                                }
+                            </h6>
+
+                            <!-- Description -->
+                            <p class="card-text">
+                                @if (offre.Description.Length > 150)
+                                {
+                                    @offre.Description.Substring(0, 150)
+                        
+                                    <text>...</text>
+                                }
+                                else
+                                {
+                                    @offre.Description
+                                }
+                            </p>
+
+                            <!-- Informations supplémentaires -->
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    📅 Publié le @offre.DatePublication.ToString("dd/MM/yyyy")
+                                    @if (offre.DateDebutSouhaitee.HasValue)
+                                    {
+                                        <br />
+                                        <text>🗓️ Début souhaité : @offre.DateDebutSouhaitee.Value.ToString("dd/MM/yyyy")</text>
+                                    }
+                                </small>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="d-flex gap-2">
+                                <a asp-action="Details" asp-route-id="@offre.Id" class="btn btn-sm btn-outline-primary">
+                                    📄 Détails
+                                </a>
+
+                                @if (User.IsInRole("Entreprise"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@offre.Id" class="btn btn-sm btn-outline-warning">
+                                        ✏️ Modifier
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@offre.Id" class="btn btn-sm btn-outline-danger">
+                                        🗑️ Supprimer
+                                    </a>
+                                }
+                                else if (User.IsInRole("Etudiant"))
+                                {
+                                    <a asp-controller="Candidatures" asp-action="Create" asp-route-offreId="@offre.Id" class="btn btn-sm btn-success">
+                                        ✉️ Postuler
+                                    </a>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -52,46 +192,20 @@
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Titre</th>
-                        <th>Entreprise</th>
-                        <th>Durée</th>
-                        <th>Date début</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var offre in Model)
-                    {
-                        <tr>
-                            <td><strong>@offre.Titre</strong></td>
-                            <td>@offre.Entreprise.Nom</td>
-                            <td>@offre.DureeMois mois</td>
-                            <td>@(offre.DateDebutSouhaitee?.ToString("dd/MM/yyyy") ?? "Flexible")</td>
-                            <td class="text-end">
-                                <div class="btn-group btn-group-sm">
-                                    <a asp-action="Details" asp-route-id="@offre.Id" class="btn btn-outline-info" title="Détails">👁️</a>
-                                    <a asp-action="Edit" asp-route-id="@offre.Id" class="btn btn-outline-warning" title="Modifier">✏️</a>
-                                    <a asp-action="Delete" asp-route-id="@offre.Id" class="btn btn-outline-danger" title="Supprimer">🗑️</a>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <div class="alert alert-warning text-center">
+            <h5>😔 Aucune offre disponible</h5>
+            @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch) ||
+                    !string.IsNullOrEmpty(ViewBag.CurrentSecteur) ||
+                    ViewBag.CurrentDuree != null)
+            {
+                <p class="mb-0">Essayez de modifier vos critères de recherche.</p>
+                <a asp-action="Index" class="btn btn-primary mt-2">Voir toutes les offres</a>
+            }
+            else if (User.IsInRole("Entreprise"))
+            {
+                <p class="mb-0">Vous n'avez pas encore publié d'offre.</p>
+                <a asp-action="Create" class="btn btn-primary mt-2">Créer une offre</a>
+            }
         </div>
     }
-}
-else
-{
-    <div class="alert alert-info text-center">
-        <p class="mb-0">Aucune offre de stage disponible pour le moment.</p>
-        @if (User.IsInRole("Entreprise"))
-        {
-            <a asp-action="Create" class="btn btn-success mt-3">Créer votre première offre</a>
-        }
-    </div>
-}
+</div>

@@ -69,15 +69,14 @@ namespace GestionStages.Controllers
             offresQuery = offresQuery.OrderByDescending(o => o.DatePublication);
 
             // PRÉPARER LES DONNÉES POUR LES FILTRES
-            // Liste des secteurs distincts (exclure vides et null)
+            // Liste des secteurs distincts
             var secteurs = await _context.Entreprises
-                .Where(e => !string.IsNullOrWhiteSpace(e.Secteur))
                 .Select(e => e.Secteur)
                 .Distinct()
                 .OrderBy(s => s)
                 .ToListAsync();
 
-            ViewBag.Secteurs = secteurs;
+            ViewBag.Secteurs = new SelectList(secteurs);
 
             // Liste des durées distinctes
             var durees = await _context.OffresStages
@@ -86,7 +85,7 @@ namespace GestionStages.Controllers
                 .OrderBy(d => d)
                 .ToListAsync();
 
-            ViewBag.Durees = durees;
+            ViewBag.Durees = new SelectList(durees);
 
             // Conserver les valeurs des filtres pour les réafficher
             ViewBag.CurrentSearch = searchString;
@@ -132,7 +131,7 @@ namespace GestionStages.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Entreprise")]
-        public async Task<IActionResult> Create([Bind("Id,Titre,Description,DureeMois,DateDebutSouhaitee")] OffresStage offreStage)
+        public async Task<IActionResult> Create([Bind("Id,Titre,Description,DureeMois,DateDebutSouhaitee")] OffreStage offreStage)
         {
             ModelState.Remove("Entreprise");
             ModelState.Remove("EntrepriseId");
@@ -189,7 +188,7 @@ namespace GestionStages.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Entreprise")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Titre,Description,DureeMois,DateDebutSouhaitee,DatePublication,EntrepriseId")] OffresStage offreStage)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Titre,Description,DureeMois,DateDebutSouhaitee,DatePublication,EntrepriseId")] OffreStage offreStage)
         {
             if (id != offreStage.Id) return NotFound();
 
