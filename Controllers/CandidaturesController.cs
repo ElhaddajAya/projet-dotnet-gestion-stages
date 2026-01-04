@@ -101,6 +101,12 @@ namespace GestionStages.Controllers
                 if (entreprise == null || candidature.OffreStage.EntrepriseId != entreprise.Id) return Forbid();
             }
 
+            // Charger la convention associée si elle existe
+            var convention = await _context.Conventions
+                .FirstOrDefaultAsync(c => c.CandidatureId == candidature.Id);
+
+            ViewBag.Convention = convention;
+
             return View(candidature);
         }
 

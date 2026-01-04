@@ -59,6 +59,19 @@
                         <h6 class="text-uppercase text-muted small mb-2">Durée du stage</h6>
                         <p>@((Model.DateFin - Model.DateDebut).Days) jours (@(Math.Round((Model.DateFin - Model.DateDebut).Days / 30.0, 1)) mois)</p>
                     </div>
+                    <div class="col-12">
+                        <h6 class="text-uppercase text-muted small mb-2">Document de convention</h6>
+                        @if (!string.IsNullOrEmpty(Model.CheminFichierPDF))
+                        {
+                            <a href="@Model.CheminFichierPDF" target="_blank" class="btn btn-success btn-sm">
+                                📄 Télécharger la convention signée
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">⚠️ Document non uploadé</span>
+                        }
+                    </div>
                 </div>
             </div>
         </div>

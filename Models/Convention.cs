@@ -7,6 +7,7 @@
         public DateTime DateDebut { get; set; }
         public DateTime DateFin { get; set; }
         public string Statut { get; set; } = "Signée"; // Signée, En cours, Terminée
+        public string? CheminFichierPDF { get; set; } // Stocke le chemin du fichier de la convention
 
         // Clé étrangère vers Candidature
         public int CandidatureId { get; set; }

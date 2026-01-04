@@ -65,7 +65,7 @@
                 </div>
             </div>
         </div>
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">Détails de l'offre</h5>
             </div>
@@ -79,6 +79,67 @@
                 </ul>
             </div>
         </div>
+
+        @if (ViewBag.Convention != null)
+        {
+            var convention = ViewBag.Convention as GestionStages.Models.Convention;
+            var today = DateTime.Now.Date;
+            var statutStage = "";
+            var badgeClass = "";
+            var icone = "";
+
+            if (today < convention.DateDebut.Date)
+            {
+                statutStage = "À venir";
+                badgeClass = "bg-info";
+                icone = "⏳";
+            }
+            else if (today >= convention.DateDebut.Date && today <= convention.DateFin.Date)
+            {
+                statutStage = "En cours";
+                badgeClass = "bg-primary";
+                icone = "🔄";
+            }
+            else
+            {
+                statutStage = "Terminé";
+                badgeClass = "bg-success";
+                icone = "✓";
+            }
+
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">📋 Convention de stage</h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Statut du stage</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @badgeClass fs-6">@icone @statutStage</span>
+                        </dd>
+
+                        <dt class="col-sm-4">Période</dt>
+                        <dd class="col-sm-8">
+                            Du @convention.DateDebut.ToString("dd/MM/yyyy")
+                            au @convention.DateFin.ToString("dd/MM/yyyy")
+                        </dd>
+
+                        <dt class="col-sm-4">Durée</dt>
+                        <dd class="col-sm-8">
+                            @((convention.DateFin - convention.DateDebut).Days) jours
+                            <small class="text-muted">(@Math.Round((convention.DateFin - convention.DateDebut).Days / 30.0, 1) mois)</small>
+                        </dd>
+
+                        <dt class="col-sm-4">Convention</dt>
+                        <dd class="col-sm-8">
+                            <a asp-controller="Conventions" asp-action="Details" asp-route-id="@convention.Id" class="btn btn-outline-primary btn-sm">
+                                Voir la convention #@convention.Id
+                            </a>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        }
     </div>
     <div class="col-lg-4">
         <div class="d-grid gap-2">

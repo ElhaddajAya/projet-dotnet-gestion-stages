@@ -18,7 +18,7 @@
                 <h5 class="mb-0">Créer une nouvelle convention de stage</h5>
             </div>
             <div class="card-body">
-                <form asp-action="Create" method="post">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
@@ -35,7 +35,7 @@
                     <!-- Date de signature -->
                     <div class="mb-3">
                         <label asp-for="DateSignature" class="form-label">Date de signature *</label>
-                        <input asp-for="DateSignature" type="date" class="form-control" />
+                        <input type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
                         <span asp-validation-for="DateSignature" class="text-danger"></span>
                     </div>
 
@@ -64,6 +64,13 @@
                             <option value="Terminée">✓ Terminée</option>
                         </select>
                         <span asp-validation-for="Statut" class="text-danger"></span>
+                    </div>
+
+                    <!-- Upload fichier PDF -->
+                    <div class="mb-3">
+                        <label for="pdfFile" class="form-label">Document de convention signé (PDF)</label>
+                        <input type="file" id="pdfFile" name="pdfFile" class="form-control" accept=".pdf" />
+                        <small class="text-muted">Optionnel - Uploadez le document signé par les 3 parties (max 10 Mo)</small>
                     </div>
 
                     <!-- Boutons -->

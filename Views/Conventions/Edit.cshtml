@@ -19,9 +19,10 @@
                 <h5 class="mb-0">Modifier la convention #@Model.Id</h5>
             </div>
             <div class="card-body">
-                <form asp-action="Edit" method="post">
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="CheminFichierPDF" />
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                     <!-- Candidature -->
@@ -65,6 +66,46 @@
                             <option value="Terminée">✓ Terminée</option>
                         </select>
                         <span asp-validation-for="Statut" class="text-danger"></span>
+                    </div>
+
+                    <!-- Fichier actuel -->
+                    @if (!string.IsNullOrEmpty(Model.CheminFichierPDF))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Document actuel</label>
+                            <div class="alert alert-info mb-2">
+                                <small>
+                                    📄 <strong>Convention signée</strong>
+                                    <br />
+                                    <a href="@Model.CheminFichierPDF" target="_blank" class="btn btn-sm btn-outline-primary mt-2">📥 Télécharger le document</a>
+                                </small>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Upload nouveau fichier PDF -->
+                    <div class="mb-3">
+                        <label for="pdfFile" class="form-label">
+                            @if (!string.IsNullOrEmpty(Model.CheminFichierPDF))
+                            {
+                                <text>Remplacer le document (optionnel)</text>
+                            }
+                            else
+                            {
+                                <text>Document de convention signé (PDF)</text>
+                            }
+                        </label>
+                        <input type="file" id="pdfFile" name="pdfFile" class="form-control" accept=".pdf" />
+                        <small class="text-muted">
+                            @if (!string.IsNullOrEmpty(Model.CheminFichierPDF))
+                            {
+                                <text>Laissez vide pour conserver le document actuel</text>
+                            }
+                            else
+                            {
+                                <text>Uploadez le document signé (max 10 Mo)</text>
+                            }
+                        </small>
                     </div>
 
                     <!-- Boutons -->
