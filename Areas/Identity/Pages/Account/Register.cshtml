@@ -1,63 +1,121 @@
 ﻿@page
 @model RegisterModel
 @{
-    ViewData["Title"] = "Inscription";
+    ViewData["Title"] = "Créer un compte";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-lg border-0">
+                <div class="row g-0">
+                    <!-- Colonne gauche - Formulaire -->
+                    <div class="col-md-6 p-5">
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold text-primary">📝 Inscription</h2>
+                            <p class="text-muted">Créez votre compte pour accéder à la plateforme</p>
+                        </div>
 
-<div class="row">
-    <div class="col-md-4">
-        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h2>Create a new account.</h2>
-            <hr />
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <!-- Champ Email -->
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label asp-for="Input.Email">Email</label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
-            </div>
-            <!-- Champ Password -->
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.Password">Password</label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
-            </div>
-            <!-- Champ Password Confirmation -->
-            <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-            </div>
-            <!-- Choix du type d'utilisateur -->
-            <div class="form-floating mb-3">
-                <select asp-for="Input.Role" class="form-control" aria-required="true">
-                    <option value="">-- Choisir un type d'utilisateur --</option>
-                    <option value="Etudiant">Étudiant</option>
-                    <option value="Entreprise">Entreprise</option>
-                </select>
-                <label asp-for="Input.Role">Type d'utilisateur</label>
-                <span asp-validation-for="Input.Role" class="text-danger"></span>
+                        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                            <!-- Type de compte -->
+                            <div class="mb-3">
+                                <label asp-for="Input.Role" class="form-label fw-bold">Type de compte *</label>
+                                <select asp-for="Input.Role" class="form-select form-select-lg" aria-required="true">
+                                    <option value="">-- Choisissez votre profil --</option>
+                                    <option value="Etudiant">👤 Étudiant</option>
+                                    <option value="Entreprise">🏢 Entreprise</option>
+                                </select>
+                                <span asp-validation-for="Input.Role" class="text-danger"></span>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-3">
+                                <label asp-for="Input.Email" class="form-label">Adresse email *</label>
+                                <input asp-for="Input.Email" class="form-control" autocomplete="username"
+                                       placeholder="exemple@email.com" aria-required="true" />
+                                <span asp-validation-for="Input.Email" class="text-danger"></span>
+                            </div>
+
+                            <!-- Mot de passe -->
+                            <div class="mb-3">
+                                <label asp-for="Input.Password" class="form-label">Mot de passe *</label>
+                                <input asp-for="Input.Password" type="password" class="form-control"
+                                       autocomplete="new-password" placeholder="••••••••" aria-required="true" />
+                                <span asp-validation-for="Input.Password" class="text-danger"></span>
+                                <small class="text-muted">Minimum 6 caractères</small>
+                            </div>
+
+                            <!-- Confirmation mot de passe -->
+                            <div class="mb-4">
+                                <label asp-for="Input.ConfirmPassword" class="form-label">Confirmer le mot de passe *</label>
+                                <input asp-for="Input.ConfirmPassword" type="password" class="form-control"
+                                       autocomplete="new-password" placeholder="••••••••" aria-required="true" />
+                                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                            </div>
+
+                            <!-- Bouton inscription -->
+                            <button id="registerSubmit" type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                                <i class="bi bi-person-plus"></i> Créer mon compte
+                            </button>
+
+                            <!-- Lien connexion -->
+                            <div class="text-center">
+                                <p class="mb-0">Déjà inscrit ? <a asp-page="./Login" class="text-primary fw-bold">Se connecter</a></p>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Colonne droite - Informations -->
+                    <div class="col-md-6 bg-primary text-white p-5 d-flex flex-column justify-content-center">
+                        <div class="mb-4">
+                            <h3 class="fw-bold mb-3">🎓 Gestion des Stages</h3>
+                            <p class="lead">Plateforme de gestion complète pour faciliter la recherche et le suivi des stages.</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3">✨ Types de comptes</h5>
+
+                            <div class="mb-3 p-3 bg-white bg-opacity-10 rounded">
+                                <h6 class="fw-bold">👤 Compte Étudiant</h6>
+                                <ul class="mb-0 small">
+                                    <li>Consulter les offres de stage disponibles</li>
+                                    <li>Postuler aux offres avec votre CV</li>
+                                    <li>Suivre vos candidatures en temps réel</li>
+                                    <li>Déposer vos rapports de stage</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-white bg-opacity-10 rounded">
+                                <h6 class="fw-bold">🏢 Compte Entreprise</h6>
+                                <ul class="mb-0 small">
+                                    <li>Publier des offres de stage</li>
+                                    <li>Recevoir et gérer les candidatures</li>
+                                    <li>Accepter ou refuser les candidats</li>
+                                    <li>Suivre vos conventions de stage</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-light mb-0">
+                            <small>
+                                <strong>ℹ️ Note :</strong> Après inscription, vous pourrez compléter votre profil
+                                avec vos informations détaillées.
+                            </small>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </form>
-    </div>
-
-    <div class="col-md-6">
-        <section>
-            <h3>Informations</h3>
-            <hr />
-            <div class="alert alert-info">
-                <h5>Types de comptes disponibles :</h5>
-                <ul>
-                    <li><strong>Étudiant</strong> : Pour consulter les offres de stage et postuler</li>
-                    <li><strong>Entreprise</strong> : Pour publier des offres de stage et gérer les candidatures</li>
-                </ul>
-                <p class="mb-0"><small>Le compte Admin est réservé aux administrateurs du système.</small></p>
+            <!-- Note administrateur -->
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="bi bi-shield-lock"></i> Le compte Administrateur est réservé aux gestionnaires de la plateforme
+                </small>
             </div>
-        </section>
+        </div>
     </div>
 </div>
 
