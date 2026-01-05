@@ -23,10 +23,16 @@ namespace GestionStages.Controllers
             _environment = environment;
         }
 
-        // GET: Conventions - AVEC RECHERCHE ET FILTRAGE
-        public async Task<IActionResult> Index(string searchString, string statutFilter)
+        // GET: Conventions - AVEC RECHERCHE, FILTRAGE ET PAGINATION (10 par page)
+        public async Task<IActionResult> Index(string searchString, string statutFilter, int pageNumber = 1)
         {
-            // Requête de base avec toutes les relations
+            const int pageSize = 10;
+
+            // Conserver les filtres pour la vue
+            ViewBag.CurrentSearch = searchString;
+            ViewBag.CurrentStatut = statutFilter;
+
+            // Requête de base avec inclusions
             var conventionsQuery = _context.Conventions
                 .Include(c => c.Candidature)
                     .ThenInclude(cand => cand.Etudiant)
@@ -35,15 +41,15 @@ namespace GestionStages.Controllers
                         .ThenInclude(o => o.Entreprise)
                 .AsQueryable();
 
-            // RECHERCHE PAR MOTS-CLÉS (Nom étudiant, entreprise, offre)
+            // RECHERCHE
             if (!string.IsNullOrEmpty(searchString))
             {
+                searchString = searchString.ToLower();
                 conventionsQuery = conventionsQuery.Where(c =>
-                    c.Candidature.Etudiant.Nom.Contains(searchString) ||
-                    c.Candidature.Etudiant.Prenom.Contains(searchString) ||
-                    c.Candidature.OffreStage.Titre.Contains(searchString) ||
-                    c.Candidature.OffreStage.Entreprise.Nom.Contains(searchString)
-                );
+                    c.Candidature.Etudiant.Nom.ToLower().Contains(searchString) ||
+                    c.Candidature.Etudiant.Prenom.ToLower().Contains(searchString) ||
+                    c.Candidature.OffreStage.Titre.ToLower().Contains(searchString) ||
+                    c.Candidature.OffreStage.Entreprise.Nom.ToLower().Contains(searchString));
             }
 
             // FILTRE PAR STATUT
@@ -52,19 +58,30 @@ namespace GestionStages.Controllers
                 conventionsQuery = conventionsQuery.Where(c => c.Statut == statutFilter);
             }
 
-            // TRI PAR DATE DE SIGNATURE (plus récentes en premier)
+            // TRI par date de signature descendante
             conventionsQuery = conventionsQuery.OrderByDescending(c => c.DateSignature);
 
-            // PRÉPARER LES DONNÉES POUR LES FILTRES
-            // Liste des statuts possibles
+            // Nombre total pour la pagination
+            var totalConventions = await conventionsQuery.CountAsync();
+
+            // Pagination
+            var conventions = await conventionsQuery
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Infos pour la vue
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalConventions = totalConventions;
+            ViewBag.HasPreviousPage = pageNumber > 1;
+            ViewBag.HasNextPage = pageNumber < Math.Ceiling((double)totalConventions / pageSize);
+
+            // Liste des statuts pour le dropdown (important pour éviter NullReference)
             var statuts = new List<string> { "Signée", "En cours", "Terminée" };
             ViewBag.Statuts = statuts;
 
-            // Conserver les valeurs des filtres
-            ViewBag.CurrentSearch = searchString;
-            ViewBag.CurrentStatut = statutFilter;
-
-            return View(await conventionsQuery.ToListAsync());
+            return View(conventions);
         }
 
         // GET: Conventions/Details/5
