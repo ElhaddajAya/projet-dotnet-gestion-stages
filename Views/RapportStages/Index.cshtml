@@ -5,7 +5,7 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>@ViewData["Title"]</h1>
+    <h1>📄 @ViewData["Title"]</h1>
     <a asp-action="Create" class="btn btn-primary">+ Créer un rapport</a>
 </div>
 
@@ -27,6 +27,56 @@
 
 @if (Model != null && Model.Any())
 {
+    <!-- FORMULAIRE DE RECHERCHE -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get">
+                <div class="row g-3">
+                    <!-- Barre de recherche -->
+                    <div class="col-md-10">
+                        <label class="form-label">
+                            🔎 Rechercher
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <small class="text-muted">(titre, étudiant, entreprise, offre)</small>
+                            }
+                            else
+                            {
+                                <small class="text-muted">(titre, entreprise)</small>
+                            }
+                        </label>
+                        <input type="text"
+                               name="searchString"
+                               value="@ViewBag.CurrentSearch"
+                               class="form-control"
+                               placeholder="@(User.IsInRole("Admin") ? "Titre, nom d'étudiant, entreprise..." : "Titre du rapport, entreprise...")" />
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="btn-group w-100" role="group">
+                            <button type="submit" class="btn btn-primary" title="Rechercher">
+                                🔍
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary" title="Réinitialiser">
+                                ↺
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Affichage du nombre de résultats -->
+    @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch))
+    {
+        <div class="alert alert-info">
+            <strong>@Model.Count()</strong> rapport(s) trouvé(s)
+        </div>
+    }
+
+    <!-- TABLEAU DES RAPPORTS -->
     <div class="table-responsive">
         <table class="table table-hover">
             <thead class="table-light">
@@ -50,7 +100,6 @@
                             @if (!string.IsNullOrEmpty(item.NomFichier))
                             {
                                 <br />
-                    
                                 <small class="text-success">✓ PDF déposé</small>
                             }
                         </td>
@@ -84,16 +133,25 @@
 }
 else
 {
-    <div class="alert alert-info text-center">
-        @if (User.IsInRole("Etudiant"))
+    <div class="alert alert-warning text-center">
+        @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch))
         {
-            <p class="mb-0">Vous n'avez pas encore soumis de rapport de stage.</p>
-            <p class="small text-muted">Vous devez d'abord avoir une convention de stage active.</p>
+            <h5>😔 Aucun rapport trouvé</h5>
+            <p class="mb-0">Essayez de modifier vos critères de recherche.</p>
+            <a asp-action="Index" class="btn btn-primary mt-2">Voir tous les rapports</a>
         }
         else
         {
-            <p class="mb-0">Aucun rapport de stage enregistré.</p>
+            @if (User.IsInRole("Etudiant"))
+            {
+                <p class="mb-0">Vous n'avez pas encore soumis de rapport de stage.</p>
+                <p class="small text-muted">Vous devez d'abord avoir une convention de stage active.</p>
+            }
+            else
+            {
+                <p class="mb-0">Aucun rapport de stage enregistré.</p>
+            }
+            <a asp-action="Create" class="btn btn-primary mt-3">+ Créer le premier rapport</a>
         }
-        <a asp-action="Create" class="btn btn-primary mt-3">+ Créer le premier rapport</a>
     </div>
 }

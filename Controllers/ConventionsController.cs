@@ -23,17 +23,48 @@ namespace GestionStages.Controllers
             _environment = environment;
         }
 
-        // GET: Conventions
-        public async Task<IActionResult> Index()
+        // GET: Conventions - AVEC RECHERCHE ET FILTRAGE
+        public async Task<IActionResult> Index(string searchString, string statutFilter)
         {
-            var conventions = _context.Conventions
+            // Requête de base avec toutes les relations
+            var conventionsQuery = _context.Conventions
                 .Include(c => c.Candidature)
                     .ThenInclude(cand => cand.Etudiant)
                 .Include(c => c.Candidature)
                     .ThenInclude(cand => cand.OffreStage)
-                        .ThenInclude(o => o.Entreprise);
+                        .ThenInclude(o => o.Entreprise)
+                .AsQueryable();
 
-            return View(await conventions.ToListAsync());
+            // RECHERCHE PAR MOTS-CLÉS (Nom étudiant, entreprise, offre)
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                conventionsQuery = conventionsQuery.Where(c =>
+                    c.Candidature.Etudiant.Nom.Contains(searchString) ||
+                    c.Candidature.Etudiant.Prenom.Contains(searchString) ||
+                    c.Candidature.OffreStage.Titre.Contains(searchString) ||
+                    c.Candidature.OffreStage.Entreprise.Nom.Contains(searchString)
+                );
+            }
+
+            // FILTRE PAR STATUT
+            if (!string.IsNullOrEmpty(statutFilter))
+            {
+                conventionsQuery = conventionsQuery.Where(c => c.Statut == statutFilter);
+            }
+
+            // TRI PAR DATE DE SIGNATURE (plus récentes en premier)
+            conventionsQuery = conventionsQuery.OrderByDescending(c => c.DateSignature);
+
+            // PRÉPARER LES DONNÉES POUR LES FILTRES
+            // Liste des statuts possibles
+            var statuts = new List<string> { "Signée", "En cours", "Terminée" };
+            ViewBag.Statuts = statuts;
+
+            // Conserver les valeurs des filtres
+            ViewBag.CurrentSearch = searchString;
+            ViewBag.CurrentStatut = statutFilter;
+
+            return View(await conventionsQuery.ToListAsync());
         }
 
         // GET: Conventions/Details/5

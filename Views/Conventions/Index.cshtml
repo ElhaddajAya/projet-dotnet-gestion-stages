@@ -5,7 +5,7 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Conventions de stage</h1>
+    <h1>📋 Conventions de stage</h1>
     <a asp-action="Create" class="btn btn-primary">+ Créer une convention</a>
 </div>
 
@@ -19,6 +19,60 @@
 
 @if (Model != null && Model.Any())
 {
+    <!-- FORMULAIRE DE RECHERCHE ET FILTRAGE -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get">
+                <div class="row g-3">
+                    <!-- Barre de recherche -->
+                    <div class="col-md-8">
+                        <label class="form-label">🔎 Rechercher</label>
+                        <input type="text"
+                               name="searchString"
+                               value="@ViewBag.CurrentSearch"
+                               class="form-control"
+                               placeholder="Nom étudiant, entreprise, titre d'offre..." />
+                    </div>
+
+                    <!-- Filtre par statut -->
+                    <div class="col-md-2">
+                        <label class="form-label">📊 Statut</label>
+                        <select name="statutFilter" class="form-select">
+                            <option value="">Tous les statuts</option>
+                            @foreach (var statut in ViewBag.Statuts)
+                            {
+                                <option value="@statut" selected="@(statut == ViewBag.CurrentStatut)">
+                                    @statut
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="btn-group w-100" role="group">
+                            <button type="submit" class="btn btn-primary" title="Filtrer">
+                                🔍
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary" title="Réinitialiser">
+                                ↺
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Affichage du nombre de résultats -->
+    @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch) || !string.IsNullOrEmpty(ViewBag.CurrentStatut))
+    {
+        <div class="alert alert-info">
+            <strong>@Model.Count()</strong> convention(s) trouvée(s)
+        </div>
+    }
+
+    <!-- TABLEAU DES CONVENTIONS -->
     <div class="table-responsive">
         <table class="table table-hover">
             <thead class="table-light">
@@ -76,8 +130,17 @@
 }
 else
 {
-    <div class="alert alert-info text-center">
-        <p class="mb-0">Aucune convention de stage enregistrée.</p>
-        <a asp-action="Create" class="btn btn-primary mt-3">+ Créer la première convention</a>
+    <div class="alert alert-warning text-center">
+        @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch) || !string.IsNullOrEmpty(ViewBag.CurrentStatut))
+        {
+            <h5>😔 Aucune convention trouvée</h5>
+            <p class="mb-0">Essayez de modifier vos critères de recherche.</p>
+            <a asp-action="Index" class="btn btn-primary mt-2">Voir toutes les conventions</a>
+        }
+        else
+        {
+            <p class="mb-0">Aucune convention de stage enregistrée.</p>
+            <a asp-action="Create" class="btn btn-primary mt-3">+ Créer la première convention</a>
+        }
     </div>
 }
