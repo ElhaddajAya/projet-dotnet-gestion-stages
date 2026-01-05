@@ -23,10 +23,15 @@ namespace GestionStages.Controllers
             _environment = environment;
         }
 
-        // GET: RapportStages - AVEC RECHERCHE ET FILTRAGE
+        // GET: RapportStages - AVEC RECHERCHE ET PAGINATION (10 par page)
         [Authorize(Roles = "Admin,Etudiant")]
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(string searchString, int pageNumber = 1)
         {
+            const int pageSize = 10;
+
+            // Conserver la recherche pour la vue
+            ViewBag.CurrentSearch = searchString;
+
             // Requête de base avec toutes les relations
             var rapportsQuery = _context.RapportsStages
                 .Include(r => r.Convention)
@@ -45,47 +50,44 @@ namespace GestionStages.Controllers
                 var etudiant = await _context.Etudiants
                     .FirstOrDefaultAsync(e => e.Email == userEmail);
 
-                if (etudiant == null)
+                if (etudiant != null)
                 {
-                    return View(await _context.RapportsStages.Where(r => false).ToListAsync());
+                    rapportsQuery = rapportsQuery.Where(r => r.Convention.Candidature.EtudiantId == etudiant.Id);
                 }
-
-                rapportsQuery = rapportsQuery
-                    .Where(r => r.Convention.Candidature.EtudiantId == etudiant.Id);
             }
-            // Admin voit tous les rapports
+            // Admin voit tout
 
-            // RECHERCHE PAR MOTS-CLÉS
+            // RECHERCHE
             if (!string.IsNullOrEmpty(searchString))
             {
-                if (User.IsInRole("Admin"))
-                {
-                    // Admin : chercher dans titre, nom étudiant, entreprise, offre
-                    rapportsQuery = rapportsQuery.Where(r =>
-                        r.Titre.Contains(searchString) ||
-                        r.Convention.Candidature.Etudiant.Nom.Contains(searchString) ||
-                        r.Convention.Candidature.Etudiant.Prenom.Contains(searchString) ||
-                        r.Convention.Candidature.OffreStage.Titre.Contains(searchString) ||
-                        r.Convention.Candidature.OffreStage.Entreprise.Nom.Contains(searchString)
-                    );
-                }
-                else if (User.IsInRole("Etudiant"))
-                {
-                    // Étudiant : chercher dans titre et entreprise
-                    rapportsQuery = rapportsQuery.Where(r =>
-                        r.Titre.Contains(searchString) ||
-                        r.Convention.Candidature.OffreStage.Entreprise.Nom.Contains(searchString)
-                    );
-                }
+                searchString = searchString.ToLower();
+                rapportsQuery = rapportsQuery.Where(r =>
+                    r.Titre.ToLower().Contains(searchString) ||
+                    r.Convention.Candidature.Etudiant.Nom.ToLower().Contains(searchString) ||
+                    r.Convention.Candidature.Etudiant.Prenom.ToLower().Contains(searchString) ||
+                    r.Convention.Candidature.OffreStage.Titre.ToLower().Contains(searchString));
             }
 
-            // TRI PAR DATE DE DÉPÔT (plus récents en premier)
+            // TRI par date de dépôt descendante
             rapportsQuery = rapportsQuery.OrderByDescending(r => r.DateDepot);
 
-            // Conserver la valeur de recherche
-            ViewBag.CurrentSearch = searchString;
+            // Nombre total pour pagination
+            var totalRapports = await rapportsQuery.CountAsync();
 
-            return View(await rapportsQuery.ToListAsync());
+            // Pagination
+            var rapports = await rapportsQuery
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Infos pagination
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalRapports = totalRapports;
+            ViewBag.HasPreviousPage = pageNumber > 1;
+            ViewBag.HasNextPage = pageNumber < Math.Ceiling((double)totalRapports / pageSize);
+
+            return View(rapports);
         }
 
         // GET: RapportStages/Details/5
