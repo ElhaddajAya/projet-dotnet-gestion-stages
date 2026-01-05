@@ -32,26 +32,6 @@ namespace GestionStages.Controllers
             ViewBag.CurrentFiliere = filiereFilter;
             ViewBag.CurrentNiveau = niveauFilter;
 
-            // Liste des filières disponibles pour le filtre (dropdown)
-            var filieres = await _context.Etudiants
-                .Select(e => e.Filiere)
-                .Distinct()
-                .Where(f => !string.IsNullOrEmpty(f))
-                .OrderBy(f => f)
-                .ToListAsync();
-
-            ViewBag.Filieres = filieres;
-
-            // Liste des niveaux disponibles pour le filtre (dropdown)
-            var niveaux = await _context.Etudiants
-                .Select(e => e.Niveau)
-                .Distinct()
-                .Where(n => !string.IsNullOrEmpty(n))
-                .OrderBy(n => n)
-                .ToListAsync();
-
-            ViewBag.Niveaux = niveaux;
-
             var etudiantsQuery = _context.Etudiants.AsQueryable();
 
             // FILTRAGE PAR RÔLE
