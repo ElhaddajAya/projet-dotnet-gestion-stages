@@ -111,6 +111,56 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- PAGINATION (seulement pour l'Admin) -->
+        @if (User.IsInRole("Admin") && ViewBag.TotalEntreprises > ViewBag.PageSize)
+        {
+            <nav aria-label="Pagination des entreprises" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(ViewBag.HasPreviousPage ? "" : "disabled")">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-searchString="@ViewBag.CurrentSearch"
+                           asp-route-secteurFilter="@ViewBag.CurrentSecteur"
+                           asp-route-pageNumber="@(ViewBag.PageNumber - 1)">
+                            &laquo;
+                        </a>
+                    </li>
+
+                    @{
+                        int current = ViewBag.PageNumber;
+                        int totalPages = (int)Math.Ceiling((double)ViewBag.TotalEntreprises / ViewBag.PageSize);
+                        int start = Math.Max(1, current - 2);
+                        int end = Math.Min(totalPages, current + 2);
+                    }
+
+                    @for (int i = start; i <= end; i++)
+                    {
+                        <li class="page-item @(i == current ? "active" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-searchString="@ViewBag.CurrentSearch"
+                               asp-route-secteurFilter="@ViewBag.CurrentSecteur"
+                               asp-route-pageNumber="@i">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(ViewBag.HasNextPage ? "" : "disabled")">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-searchString="@ViewBag.CurrentSearch"
+                           asp-route-secteurFilter="@ViewBag.CurrentSecteur"
+                           asp-route-pageNumber="@(ViewBag.PageNumber + 1)">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+                <p class="text-center text-muted small mt-2">
+                    Page @ViewBag.PageNumber sur @((int)Math.Ceiling((double)ViewBag.TotalEntreprises / ViewBag.PageSize))
+                    — @ViewBag.TotalEntreprises entreprise(s)
+                </p>
+            </nav>
+        }
     }
     else
     {

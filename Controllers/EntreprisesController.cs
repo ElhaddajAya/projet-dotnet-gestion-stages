@@ -21,31 +21,37 @@ namespace GestionStages.Controllers
             _context = context;
         }
 
-        // GET: Entreprises - AVEC RECHERCHE ET FILTRAGE
+        // GET: Entreprises - AVEC RECHERCHE, FILTRAGE ET PAGINATION (10 par page)
         [Authorize(Roles = "Admin,Entreprise")]
-        public async Task<IActionResult> Index(string searchString, string secteurFilter)
+        public async Task<IActionResult> Index(string searchString, string secteurFilter, int pageNumber = 1)
         {
-            // Requête de base
+            const int pageSize = 10;
+
+            // Conserver les filtres
+            ViewBag.CurrentSearch = searchString;
+            ViewBag.CurrentSecteur = secteurFilter;
+
             var entreprisesQuery = _context.Entreprises.AsQueryable();
 
             // FILTRAGE PAR RÔLE
             if (User.IsInRole("Entreprise"))
             {
-                // L'entreprise voit seulement son profil
                 var userEmail = User.Identity.Name;
                 entreprisesQuery = entreprisesQuery.Where(e => e.EmailContact == userEmail);
+                // Pour l'entreprise : pas de pagination, elle n'a qu'un seul profil
+                var entrepriseProfil = await entreprisesQuery.SingleOrDefaultAsync();
+                return View(new List<Entreprise> { entrepriseProfil ?? new Entreprise() });
             }
-            // Admin voit toutes les entreprises
 
-            // RECHERCHE PAR MOTS-CLÉS (Nom, Email, Adresse)
+            // RECHERCHE (Admin seulement)
             if (!string.IsNullOrEmpty(searchString))
             {
+                searchString = searchString.ToLower();
                 entreprisesQuery = entreprisesQuery.Where(e =>
-                    e.Nom.Contains(searchString) ||
-                    e.EmailContact.Contains(searchString) ||
-                    e.Adresse.Contains(searchString) ||
-                    e.Telephone.Contains(searchString)
-                );
+                    e.Nom.ToLower().Contains(searchString) ||
+                    e.EmailContact.ToLower().Contains(searchString) ||
+                    e.Adresse.ToLower().Contains(searchString) ||
+                    e.Telephone.Contains(searchString));
             }
 
             // FILTRE PAR SECTEUR
@@ -54,25 +60,36 @@ namespace GestionStages.Controllers
                 entreprisesQuery = entreprisesQuery.Where(e => e.Secteur == secteurFilter);
             }
 
-            // TRI PAR NOM (ordre alphabétique)
+            // TRI alphabétique
             entreprisesQuery = entreprisesQuery.OrderBy(e => e.Nom);
 
-            // PRÉPARER LES DONNÉES POUR LES FILTRES
-            // Liste des secteurs distincts
+            // Nombre total (Admin)
+            var totalEntreprises = await entreprisesQuery.CountAsync();
+
+            // Pagination (Admin)
+            var entreprises = await entreprisesQuery
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Infos pagination
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalEntreprises = totalEntreprises;
+            ViewBag.HasPreviousPage = pageNumber > 1;
+            ViewBag.HasNextPage = pageNumber < Math.Ceiling((double)totalEntreprises / pageSize);
+
+            // Liste des secteurs pour le dropdown (évite NullReference)
             var secteurs = await _context.Entreprises
-                .Where(e => !string.IsNullOrWhiteSpace(e.Secteur))
                 .Select(e => e.Secteur)
                 .Distinct()
+                .Where(s => !string.IsNullOrEmpty(s))
                 .OrderBy(s => s)
                 .ToListAsync();
 
             ViewBag.Secteurs = secteurs;
 
-            // Conserver les valeurs des filtres
-            ViewBag.CurrentSearch = searchString;
-            ViewBag.CurrentSecteur = secteurFilter;
-
-            return View(await entreprisesQuery.ToListAsync());
+            return View(entreprises);
         }
 
         // GET: Entreprises/Details/5 - Admin et Entreprise peuvent voir les détails
