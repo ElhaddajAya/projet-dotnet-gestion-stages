@@ -135,6 +135,24 @@ namespace GestionStages.Controllers
                 }
             }
 
+            // Statistiques pour la vue Details
+            ViewBag.NbCandidatures = await _context.Candidatures
+                .CountAsync(c => c.EtudiantId == id);
+
+            ViewBag.NbCandidaturesAcceptees = await _context.Candidatures
+                .CountAsync(c => c.EtudiantId == id && c.Statut == "Acceptée");
+
+            ViewBag.NbCandidaturesEnAttente = await _context.Candidatures
+                .CountAsync(c => c.EtudiantId == id && c.Statut == "En attente");
+
+            var conventionEnCours = await _context.Conventions
+                .AnyAsync(c => c.Candidature.EtudiantId == id && c.Statut == "En cours");
+
+            ViewBag.AConventionEnCours = conventionEnCours;
+
+            ViewBag.ADejaRapport = await _context.RapportsStages
+                .AnyAsync(r => r.Convention.Candidature.EtudiantId == id);
+
             return View(etudiant);
         }
 
