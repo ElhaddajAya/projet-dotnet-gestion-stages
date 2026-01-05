@@ -41,51 +41,76 @@
 }
 else if (User.IsInRole("Admin"))
 {
-    <h1 class="mb-4">Tableau de bord Administrateur</h1>
-    <div class="row g-4">
-        <div class="col-md-3">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">Étudiants</h5>
-                    <p class="card-text display-6">@ViewBag.NbEtudiants</p>
-                    <a asp-controller="Etudiants" asp-action="Index" class="btn btn-light btn-sm">Gérer</a>
+    <h1 class="mb-4">📊 Tableau de bord Administrateur</h1>
+    <p class="text-muted">Vue d'ensemble de la plateforme - @DateTime.Now.ToString("dd MMMM yyyy")</p>
+
+    <!-- Cartes de statistiques -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3 col-sm-6">
+            <div class="card text-white bg-primary shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Étudiants</h5>
+                    <h2 class="mb-0">@ViewBag.NbEtudiants</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">Entreprises</h5>
-                    <p class="card-text display-6">@ViewBag.NbEntreprises</p>
-                    <a asp-controller="Entreprises" asp-action="Index" class="btn btn-light btn-sm">Gérer</a>
+        <div class="col-md-3 col-sm-6">
+            <div class="card text-white bg-success shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Entreprises</h5>
+                    <h2 class="mb-0">@ViewBag.NbEntreprises</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h5 class="card-title">Offres</h5>
-                    <p class="card-text display-6">@ViewBag.NbOffres</p>
-                    <a asp-controller="OffresStages" asp-action="Index" class="btn btn-light btn-sm">Gérer</a>
+        <div class="col-md-3 col-sm-6">
+            <div class="card text-white bg-info shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Offres actives</h5>
+                    <h2 class="mb-0">@ViewBag.NbOffres</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <h5 class="card-title">Candidatures</h5>
-                    <p class="card-text display-6">@ViewBag.NbCandidatures</p>
-                    <a asp-controller="Candidatures" asp-action="Index" class="btn btn-light btn-sm">Gérer</a>
+        <div class="col-md-3 col-sm-6">
+            <div class="card text-white bg-warning shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Candidatures</h5>
+                    <h2 class="mb-0">@ViewBag.NbCandidatures</h2>
+                    <small>@ViewBag.NbCandidaturesEnAttente en attente</small>
                 </div>
             </div>
         </div>
     </div>
-    <div class="mt-5">
-        <h4>Actions rapides</h4>
-        <div class="list-group">
-            <a asp-controller="Conventions" asp-action="Index" class="list-group-item list-group-item-action">Gérer les conventions</a>
-            <a asp-controller="RapportStages" asp-action="Index" class="list-group-item list-group-item-action">Gérer les rapports de stage</a>
+
+    <div class="row g-4">
+        <!-- Graphique : Offres par secteur -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Offres par secteur d'activité</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartSecteurs" height="300"></canvas>
+                </div>
+            </div>
         </div>
+
+        <!-- Graphique : Candidatures par mois -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Évolution des candidatures (12 derniers mois)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartCandidatures" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        <a asp-controller="OffresStages" asp-action="Index" class="btn btn-outline-primary">Gérer les offres</a>
+        <a asp-controller="Candidatures" asp-action="Index" class="btn btn-outline-info">Voir les candidatures</a>
+        <a asp-controller="Etudiants" asp-action="Index" class="btn btn-outline-secondary">Gérer les étudiants</a>
     </div>
 }
 else if (User.IsInRole("Etudiant"))
@@ -167,4 +192,47 @@ else if (User.IsInRole("Entreprise"))
         <a asp-controller="OffresStages" asp-action="Index" class="btn btn-primary btn-lg">Gérer mes offres</a>
         <a asp-controller="Entreprises" asp-action="Index" class="btn btn-outline-secondary btn-lg">Mon profil</a>
     </div>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Graphique secteurs
+        const dataSecteurs = @Html.Raw(ViewBag.OffresParSecteurJson);
+        new Chart(document.getElementById('chartSecteurs'), {
+            type: 'doughnut',
+            data: {
+                labels: dataSecteurs.map(item => item.Secteur),
+                datasets: [{
+                    data: dataSecteurs.map(item => item.Count),
+                    backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14', '#20c997', '#17a2b8']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+
+        // Graphique candidatures par mois
+        const dataMois = @Html.Raw(ViewBag.CandidaturesParMoisJson);
+        new Chart(document.getElementById('chartCandidatures'), {
+            type: 'line',
+            data: {
+                labels: dataMois.map(item => item.Mois),
+                datasets: [{
+                    label: 'Candidatures',
+                    data: dataMois.map(item => item.Count),
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0,123,255,0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    </script>
 }

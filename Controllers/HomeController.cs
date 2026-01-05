@@ -23,11 +23,53 @@ namespace GestionStages.Controllers
             {
                 if (User.IsInRole("Admin"))
                 {
-                    // Statistiques pour Admin
+                    // Statistiques globales
                     ViewBag.NbEtudiants = await _context.Etudiants.CountAsync();
                     ViewBag.NbEntreprises = await _context.Entreprises.CountAsync();
                     ViewBag.NbOffres = await _context.OffresStages.CountAsync();
                     ViewBag.NbCandidatures = await _context.Candidatures.CountAsync();
+                    ViewBag.NbCandidaturesEnAttente = await _context.Candidatures.CountAsync(c => c.Statut == "En attente");
+                    ViewBag.NbCandidaturesAcceptees = await _context.Candidatures.CountAsync(c => c.Statut == "Acceptée");
+                    ViewBag.NbConventions = await _context.Conventions.CountAsync();
+                    ViewBag.NbConventionsEnCours = await _context.Conventions.CountAsync(c => c.Statut == "En cours");
+                    ViewBag.NbRapports = await _context.RapportsStages.CountAsync();
+
+                    // Données pour les graphiques (passées en JSON sécurisé)
+                    var offresParSecteur = await _context.OffresStages
+                        .Include(o => o.Entreprise)
+                        .GroupBy(o => o.Entreprise.Secteur ?? "Non spécifié")
+                        .Select(g => new { Secteur = g.Key, Count = g.Count() }) // Compter les offres par secteur
+                        .OrderByDescending(g => g.Count)
+                        .Take(8)
+                        .ToListAsync();
+
+                    ViewBag.OffresParSecteurJson = System.Text.Json.JsonSerializer.Serialize(offresParSecteur);
+
+                    // Évolution des candidatures par mois (12 derniers mois)
+                    var candidaturesGroupées = await _context.Candidatures
+                        .GroupBy(c => new { c.DateCandidature.Year, c.DateCandidature.Month })
+                        .Select(g => new // compter les candidatures par mois
+                        {
+                            g.Key.Year,
+                            g.Key.Month,
+                            Count = g.Count()
+                        })
+                        .OrderByDescending(g => g.Year).ThenByDescending(g => g.Month)
+                        .Take(12)
+                        .ToListAsync();
+
+                    // Formater le label "YYYY-MM" en C# (client-side)
+                    var candidaturesParMoisFormatees = candidaturesGroupées
+                        .OrderBy(g => g.Year).ThenBy(g => g.Month) // Remettre dans l'ordre chronologique
+                        .Select(g => new
+                        {
+                            Mois = $"{g.Year}-{g.Month:D2}",
+                            Count = g.Count
+                        })
+                        .ToList();
+
+                    ViewBag.CandidaturesParMoisJson = System.Text.Json.JsonSerializer.Serialize(candidaturesParMoisFormatees);
+                
                 }
                 else if (User.IsInRole("Etudiant"))
                 {
