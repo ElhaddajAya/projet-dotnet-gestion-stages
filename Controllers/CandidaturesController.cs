@@ -23,10 +23,26 @@ namespace GestionStages.Controllers
             _environment = environment;
         }
 
-        // GET: Candidatures
-        // AVEC RECHERCHE ET FILTRAGE
-        public async Task<IActionResult> Index(string searchString, string statutFilter)
+        // GET: Candidatures - AVEC RECHERCHE, FILTRAGE PAR STATUT ET PAGINATION (10 par page)
+        public async Task<IActionResult> Index(
+            string searchString,
+            string statutFilter,
+            int pageNumber = 1)  // Ajout du paramètre page
         {
+            const int pageSize = 10;
+
+            // Conserver les filtres pour la vue et la pagination
+            ViewBag.CurrentSearch = searchString;
+            ViewBag.CurrentStatut = statutFilter;
+
+            var statuts = await _context.Candidatures
+                .Select(c => c.Statut)
+                .Distinct()
+                .OrderBy(s => s)
+                .ToListAsync();
+
+            ViewBag.Statuts = statuts;
+
             // Requête de base avec toutes les relations
             var candidaturesQuery = _context.Candidatures
                 .Include(c => c.Etudiant)
@@ -34,63 +50,33 @@ namespace GestionStages.Controllers
                     .ThenInclude(o => o.Entreprise)
                 .AsQueryable();
 
-            // FILTRAGE PAR RÔLE
+            // FILTRAGE PAR RÔLE (inchangé - on garde tout ton code existant ici)
             if (User.IsInRole("Etudiant"))
             {
-                // L'étudiant voit uniquement ses candidatures
                 var userEmail = User.Identity.Name;
-                var etudiant = await _context.Etudiants
-                    .FirstOrDefaultAsync(e => e.Email == userEmail);
-
-                if (etudiant != null)
-                {
-                    candidaturesQuery = candidaturesQuery.Where(c => c.EtudiantId == etudiant.Id);
-                }
+                candidaturesQuery = candidaturesQuery.Where(c => c.Etudiant.Email == userEmail);
             }
             else if (User.IsInRole("Entreprise"))
             {
-                // L'entreprise voit les candidatures pour ses offres
                 var userEmail = User.Identity.Name;
                 var entreprise = await _context.Entreprises
                     .FirstOrDefaultAsync(e => e.EmailContact == userEmail);
-
                 if (entreprise != null)
                 {
                     candidaturesQuery = candidaturesQuery.Where(c => c.OffreStage.EntrepriseId == entreprise.Id);
                 }
             }
-            // Admin voit toutes les candidatures
+            // Admin voit tout
 
-            // RECHERCHE PAR MOTS-CLÉS
+            // RECHERCHE
             if (!string.IsNullOrEmpty(searchString))
             {
-                if (User.IsInRole("Etudiant"))
-                {
-                    // Étudiant : chercher dans titre offre et nom entreprise
-                    candidaturesQuery = candidaturesQuery.Where(c =>
-                        c.OffreStage.Titre.Contains(searchString) ||
-                        c.OffreStage.Entreprise.Nom.Contains(searchString)
-                    );
-                }
-                else if (User.IsInRole("Entreprise"))
-                {
-                    // Entreprise : chercher dans nom étudiant et filière
-                    candidaturesQuery = candidaturesQuery.Where(c =>
-                        c.Etudiant.Nom.Contains(searchString) ||
-                        c.Etudiant.Prenom.Contains(searchString) ||
-                        c.Etudiant.Filiere.Contains(searchString)
-                    );
-                }
-                else if (User.IsInRole("Admin"))
-                {
-                    // Admin : chercher partout
-                    candidaturesQuery = candidaturesQuery.Where(c =>
-                        c.Etudiant.Nom.Contains(searchString) ||
-                        c.Etudiant.Prenom.Contains(searchString) ||
-                        c.OffreStage.Titre.Contains(searchString) ||
-                        c.OffreStage.Entreprise.Nom.Contains(searchString)
-                    );
-                }
+                searchString = searchString.ToLower();
+                candidaturesQuery = candidaturesQuery.Where(c =>
+                    c.Etudiant.Nom.ToLower().Contains(searchString) ||
+                    c.Etudiant.Prenom.ToLower().Contains(searchString) ||
+                    c.OffreStage.Titre.ToLower().Contains(searchString) ||
+                    c.OffreStage.Entreprise.Nom.ToLower().Contains(searchString));
             }
 
             // FILTRE PAR STATUT
@@ -99,19 +85,26 @@ namespace GestionStages.Controllers
                 candidaturesQuery = candidaturesQuery.Where(c => c.Statut == statutFilter);
             }
 
-            // TRI PAR DATE (plus récentes en premier)
+            // TRI par date (plus récent en haut)
             candidaturesQuery = candidaturesQuery.OrderByDescending(c => c.DateCandidature);
 
-            // PRÉPARER LES DONNÉES POUR LES FILTRES
-            // Liste des statuts possibles
-            var statuts = new List<string> { "En attente", "Acceptée", "Refusée" };
-            ViewBag.Statuts = statuts;
+            // COMPTAGE TOTAL POUR PAGINATION
+            var totalCandidatures = await candidaturesQuery.CountAsync();
 
-            // Conserver les valeurs des filtres
-            ViewBag.CurrentSearch = searchString;
-            ViewBag.CurrentStatut = statutFilter;
+            // PAGINATION
+            var candidatures = await candidaturesQuery
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            return View(await candidaturesQuery.ToListAsync());
+            // Infos pour la vue
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCandidatures = totalCandidatures;
+            ViewBag.HasPreviousPage = pageNumber > 1;
+            ViewBag.HasNextPage = pageNumber < Math.Ceiling((double)totalCandidatures / pageSize);
+
+            return View(candidatures);
         }
 
         // GET: Candidatures/Details/5
