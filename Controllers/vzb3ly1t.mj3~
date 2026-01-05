@@ -43,15 +43,6 @@ namespace GestionStages.Controllers
 
             ViewBag.Secteurs = secteurs;
 
-            // Liste des durées possibles pour le filtre (dropdown)
-            var durees = await _context.OffresStages
-                .Select(o => o.DureeMois)
-                .Distinct()
-                .OrderBy(d => d)
-                .ToListAsync();
-
-            ViewBag.Durees = durees;
-
             // Requête de base
             var offresQuery = _context.OffresStages
                 .Include(o => o.Entreprise)
