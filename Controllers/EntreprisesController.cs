@@ -118,6 +118,16 @@ namespace GestionStages.Controllers
                 }
             }
 
+            // Statistiques pour la vue Details
+            ViewBag.NbOffres = await _context.OffresStages
+                .CountAsync(o => o.EntrepriseId == id);
+
+            ViewBag.NbCandidatures = await _context.Candidatures
+                .CountAsync(c => c.OffreStage.EntrepriseId == id);
+
+            ViewBag.NbNouvellesCandidatures = await _context.Candidatures
+                .CountAsync(c => c.OffreStage.EntrepriseId == id && c.Statut == "En attente");
+
             return View(entreprise);
         }
 

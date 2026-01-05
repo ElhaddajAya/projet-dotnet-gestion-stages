@@ -41,12 +41,30 @@
 
         @if (User.IsInRole("Admin"))
         {
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">📊 Statistiques</h6>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted small">Statistiques détaillées disponibles prochainement (nombre d'offres, candidatures, etc.)</p>
+            <!-- STATISTIQUES ENTREPRISE -->
+            <div class="row mt-4">
+                <div class="col-lg-12">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">📊 Statistiques de l'entreprise</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <h4 class="text-info">@ViewBag.NbOffres</h4>
+                                    <p class="mb-0">Offre(s) publiée(s)</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h4 class="text-success">@ViewBag.NbCandidatures</h4>
+                                    <p class="mb-0">Candidature(s) reçue(s)</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h4 class="text-warning">@ViewBag.NbNouvellesCandidatures</h4>
+                                    <p class="mb-0">Nouvelle(s) à traiter</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         }
