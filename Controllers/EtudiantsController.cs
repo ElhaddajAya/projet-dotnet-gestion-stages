@@ -21,23 +21,74 @@ namespace GestionStages.Controllers
             _context = context;
         }
 
-        // GET: Etudiants - Admin, et Etudiant peut voire son profil
+        // GET: Etudiants - AVEC RECHERCHE ET FILTRAGE
         [Authorize(Roles = "Admin,Etudiant")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, string filiereFilter, string niveauFilter)
         {
-            // Si l'utilisateur est Admin, on affiche tous les étudiants
-            if (User.IsInRole("Admin"))
+            // Requête de base
+            var etudiantsQuery = _context.Etudiants.AsQueryable();
+
+            // FILTRAGE PAR RÔLE
+            if (User.IsInRole("Etudiant"))
             {
-                return View(await _context.Etudiants.ToListAsync());
+                // L'étudiant voit seulement son profil
+                var userEmail = User.Identity.Name;
+                etudiantsQuery = etudiantsQuery.Where(e => e.Email == userEmail);
+            }
+            // Admin voit tous les étudiants
+
+            // RECHERCHE PAR MOTS-CLÉS (Nom, Prénom, Email)
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                etudiantsQuery = etudiantsQuery.Where(e =>
+                    e.Nom.Contains(searchString) ||
+                    e.Prenom.Contains(searchString) ||
+                    e.Email.Contains(searchString)
+                );
             }
 
-            // Si c'est un Etudiant, on affiche seulement son profil
-            var userEmail = User.Identity.Name;
-            var etudiants = await _context.Etudiants
-                .Where(e => e.Email == userEmail)
+            // FILTRE PAR FILIÈRE
+            if (!string.IsNullOrEmpty(filiereFilter))
+            {
+                etudiantsQuery = etudiantsQuery.Where(e => e.Filiere == filiereFilter);
+            }
+
+            // FILTRE PAR NIVEAU
+            if (!string.IsNullOrEmpty(niveauFilter))
+            {
+                etudiantsQuery = etudiantsQuery.Where(e => e.Niveau == niveauFilter);
+            }
+
+            // TRI PAR NOM (ordre alphabétique)
+            etudiantsQuery = etudiantsQuery.OrderBy(e => e.Nom).ThenBy(e => e.Prenom);
+
+            // PRÉPARER LES DONNÉES POUR LES FILTRES
+            // Liste des filières distinctes
+            var filieres = await _context.Etudiants
+                .Where(e => !string.IsNullOrWhiteSpace(e.Filiere))
+                .Select(e => e.Filiere)
+                .Distinct()
+                .OrderBy(f => f)
                 .ToListAsync();
 
-            return View(etudiants);
+            ViewBag.Filieres = filieres;
+
+            // Liste des niveaux distincts
+            var niveaux = await _context.Etudiants
+                .Where(e => !string.IsNullOrWhiteSpace(e.Niveau))
+                .Select(e => e.Niveau)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToListAsync();
+
+            ViewBag.Niveaux = niveaux;
+
+            // Conserver les valeurs des filtres
+            ViewBag.CurrentSearch = searchString;
+            ViewBag.CurrentFiliere = filiereFilter;
+            ViewBag.CurrentNiveau = niveauFilter;
+
+            return View(await etudiantsQuery.ToListAsync());
         }
 
         // GET: Etudiants/Details/5 - Admin et Etudiant peuvent voir les détails

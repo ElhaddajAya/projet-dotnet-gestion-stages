@@ -21,23 +21,58 @@ namespace GestionStages.Controllers
             _context = context;
         }
 
-        // GET: Entreprises - Admin et Entreprise peuvent voir la liste
+        // GET: Entreprises - AVEC RECHERCHE ET FILTRAGE
         [Authorize(Roles = "Admin,Entreprise")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, string secteurFilter)
         {
-            // Si l'utilisateur est Admin, on affiche toutes les entreprises
-            if (User.IsInRole("Admin"))
+            // Requête de base
+            var entreprisesQuery = _context.Entreprises.AsQueryable();
+
+            // FILTRAGE PAR RÔLE
+            if (User.IsInRole("Entreprise"))
             {
-                return View(await _context.Entreprises.ToListAsync());
+                // L'entreprise voit seulement son profil
+                var userEmail = User.Identity.Name;
+                entreprisesQuery = entreprisesQuery.Where(e => e.EmailContact == userEmail);
+            }
+            // Admin voit toutes les entreprises
+
+            // RECHERCHE PAR MOTS-CLÉS (Nom, Email, Adresse)
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                entreprisesQuery = entreprisesQuery.Where(e =>
+                    e.Nom.Contains(searchString) ||
+                    e.EmailContact.Contains(searchString) ||
+                    e.Adresse.Contains(searchString) ||
+                    e.Telephone.Contains(searchString)
+                );
             }
 
-            // Si c'est une Entreprise, on affiche seulement son profil
-            var userEmail = User.Identity.Name;
-            var entreprises = await _context.Entreprises
-                .Where(e => e.EmailContact == userEmail)
+            // FILTRE PAR SECTEUR
+            if (!string.IsNullOrEmpty(secteurFilter))
+            {
+                entreprisesQuery = entreprisesQuery.Where(e => e.Secteur == secteurFilter);
+            }
+
+            // TRI PAR NOM (ordre alphabétique)
+            entreprisesQuery = entreprisesQuery.OrderBy(e => e.Nom);
+
+            // PRÉPARER LES DONNÉES POUR LES FILTRES
+            // Liste des secteurs distincts
+            var secteurs = await _context.Entreprises
+                .Where(e => !string.IsNullOrWhiteSpace(e.Secteur))
+                .Select(e => e.Secteur)
+                .Distinct()
+                .OrderBy(s => s)
                 .ToListAsync();
 
-            return View(entreprises);
+            ViewBag.Secteurs = secteurs;
+
+            // Conserver les valeurs des filtres
+            ViewBag.CurrentSearch = searchString;
+            ViewBag.CurrentSecteur = secteurFilter;
+
+            return View(await entreprisesQuery.ToListAsync());
         }
 
         // GET: Entreprises/Details/5 - Admin et Entreprise peuvent voir les détails

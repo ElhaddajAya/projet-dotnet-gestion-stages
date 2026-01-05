@@ -24,6 +24,59 @@
 {
     @if (User.IsInRole("Admin"))
     {
+        <!-- FORMULAIRE DE RECHERCHE ET FILTRAGE (Admin uniquement) -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form asp-action="Index" method="get">
+                    <div class="row g-3">
+                        <!-- Barre de recherche -->
+                        <div class="col-md-8">
+                            <label class="form-label">🔎 Rechercher</label>
+                            <input type="text"
+                                   name="searchString"
+                                   value="@ViewBag.CurrentSearch"
+                                   class="form-control"
+                                   placeholder="Nom, email, adresse, téléphone..." />
+                        </div>
+
+                        <!-- Filtre par secteur -->
+                        <div class="col-md-2">
+                            <label class="form-label">🏢 Secteur</label>
+                            <select name="secteurFilter" class="form-select">
+                                <option value="">Tous les secteurs</option>
+                                @foreach (var secteur in ViewBag.Secteurs)
+                                {
+                                    <option value="@secteur" selected="@(secteur == ViewBag.CurrentSecteur)">
+                                        @secteur
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="btn-group w-100" role="group">
+                                <button type="submit" class="btn btn-primary" title="Filtrer">
+                                    🔍
+                                </button>
+                                <a asp-action="Index" class="btn btn-outline-secondary" title="Réinitialiser">
+                                    ↺
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Affichage du nombre de résultats -->
+        @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch) || !string.IsNullOrEmpty(ViewBag.CurrentSecteur))
+        {
+            <div class="alert alert-info">
+                <strong>@Model.Count()</strong> entreprise(s) trouvée(s)
+            </div>
+        }
+
         <!-- Vue TABLE pour Admin -->
         <div class="table-responsive">
             <table class="table table-hover">
@@ -109,10 +162,19 @@
 else
 {
     <div class="alert alert-warning text-center">
-        <p class="mb-0">Aucune entreprise trouvée.</p>
-        @if (User.IsInRole("Admin"))
+        @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch) || !string.IsNullOrEmpty(ViewBag.CurrentSecteur))
         {
-            <a asp-action="Create" class="btn btn-primary mt-3">+ Ajouter une entreprise</a>
+            <h5>😔 Aucune entreprise trouvée</h5>
+            <p class="mb-0">Essayez de modifier vos critères de recherche.</p>
+            <a asp-action="Index" class="btn btn-primary mt-2">Voir toutes les entreprises</a>
+        }
+        else
+        {
+            <p class="mb-0">Aucune entreprise trouvée.</p>
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="Create" class="btn btn-primary mt-3">+ Ajouter une entreprise</a>
+            }
         }
     </div>
 }
