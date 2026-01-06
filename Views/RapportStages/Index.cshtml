@@ -6,7 +6,13 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>📄 @ViewData["Title"]</h1>
-    <a asp-action="Create" class="btn btn-primary">+ Créer un rapport</a>
+    <div>
+        <a asp-action="Create" class="btn btn-primary me-2">+ Créer un rapport</a>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="ExportExcel" class="btn btn-success">📥 Exporter en Excel</a>
+        }
+    </div>
 </div>
 
 @if (TempData["Success"] != null)

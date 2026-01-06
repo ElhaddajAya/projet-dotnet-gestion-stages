@@ -470,5 +470,55 @@ namespace GestionStages.Controllers
                 ViewData["ConventionId"] = new SelectList(conventions, "Id", "Display", rapportStage.ConventionId);
             }
         }
+
+        // GET: RapportStages/ExportExcel
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var rapports = await _context.RapportsStages
+                .Include(r => r.Convention)
+                    .ThenInclude(c => c.Candidature)
+                        .ThenInclude(ca => ca.Etudiant)
+                .Include(r => r.Convention)
+                    .ThenInclude(c => c.Candidature)
+                        .ThenInclude(ca => ca.OffreStage)
+                            .ThenInclude(o => o.Entreprise)
+                .Select(r => new
+                {
+                    Titre_Rapport = r.Titre,
+                    Étudiant = r.Convention.Candidature.Etudiant.Nom + " " + r.Convention.Candidature.Etudiant.Prenom,
+                    Email_Étudiant = r.Convention.Candidature.Etudiant.Email,
+                    Offre = r.Convention.Candidature.OffreStage.Titre,
+                    Entreprise = r.Convention.Candidature.OffreStage.Entreprise.Nom,
+                    Date_Dépôt = r.DateDepot.ToString("dd/MM/yyyy"),
+                    Fichier_Déposé = string.IsNullOrEmpty(r.NomFichier) ? "Non" : "Oui"
+                })
+                .ToListAsync();
+
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Rapports");
+
+            // Titre
+            worksheet.Cell(1, 1).Value = "Liste des rapports de stage";
+            worksheet.Cell(1, 1).Style.Font.Bold = true;
+            worksheet.Cell(1, 1).Style.Font.FontSize = 16;
+            worksheet.Row(1).Height = 30;
+
+            // Tableau
+            var range = worksheet.Cell(3, 1).InsertTable(rapports);
+            range.Theme = ClosedXML.Excel.XLTableTheme.TableStyleMedium9;
+
+            // Ajuster colonnes
+            worksheet.Columns().AdjustToContents();
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            var content = stream.ToArray();
+
+            return File(
+                content,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Rapports_{DateTime.Now:yyyy-MM-dd}.xlsx");
+        }
     }
 }

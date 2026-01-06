@@ -140,13 +140,12 @@ namespace GestionStages.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ExportDashboardPdf()
         {
-            // Récupération des données (inchangée)
+            // Récupération des données
             var nbEtudiants = await _context.Etudiants.CountAsync();
             var nbEntreprises = await _context.Entreprises.CountAsync();
             var nbOffres = await _context.OffresStages.CountAsync();
             var nbCandidatures = await _context.Candidatures.CountAsync();
             var nbCandidaturesEnAttente = await _context.Candidatures.CountAsync(c => c.Statut == "En attente");
-            var nbCandidaturesAcceptees = await _context.Candidatures.CountAsync(c => c.Statut == "Acceptée");
             var nbConventions = await _context.Conventions.CountAsync();
             var nbConventionsEnCours = await _context.Conventions.CountAsync(c => c.Statut == "En cours");
             var nbRapports = await _context.RapportsStages.CountAsync();
@@ -171,6 +170,7 @@ namespace GestionStages.Controllers
                 .Select(g => new { Mois = $"{g.Year}-{g.Month:D2}", Count = g.Count })
                 .ToList();
 
+            // Génération du PDF
             var document = Document.Create(container =>
             {
                 container.Page(page =>
@@ -180,26 +180,24 @@ namespace GestionStages.Controllers
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontSize(12));
 
-                    // Header unique
-                    page.Header().PaddingBottom(20).Column(column =>
+                    page.Header().AlignCenter()
+                        .Text("Tableau de bord - Gestion des Stages")
+                        .SemiBold().FontSize(24).FontColor(Colors.Blue.Darken3);
+
+                    page.Header().AlignCenter()
+                        .Text($"Généré le {DateTime.Now:dddd dd MMMM yyyy à HH:mm}")
+                        .FontSize(12).FontColor(Colors.Grey.Medium);
+
+                    page.Content().PaddingVertical(2, Unit.Centimetre).Column(column =>
                     {
-                        column.Item().AlignCenter()
-                            .Text("Tableau de bord - Gestion des Stages")
-                            .SemiBold().FontSize(24).FontColor(Colors.Blue.Darken3);
+                        column.Spacing(30);
 
-                        column.Item().AlignCenter()
-                            .Text($"Généré le {DateTime.Now:dddd dd MMMM yyyy à HH:mm}")
-                            .FontSize(12).FontColor(Colors.Grey.Medium);
-                    });
-
-                    page.Content().PaddingVertical(1, Unit.Centimetre).Column(column =>
-                    {
-                        column.Spacing(20);
-
-                        // 4 CARTES STATISTIQUES avec Row + RelativeItem
-                        column.Item().Row(row =>
+                        // Cartes statistiques
+                        column.Item().Grid(grid =>
                         {
-                            row.RelativeItem().Border(2).BorderColor(Colors.Blue.Darken2).Background(Colors.Blue.Lighten5).Padding(20).AlignCenter()
+                            grid.Columns(4);
+
+                            grid.Item().Border(2).BorderColor(Colors.Blue.Darken2).Background(Colors.Blue.Lighten5).Padding(20).AlignCenter()
                                 .Text(text =>
                                 {
                                     text.Span(nbEtudiants.ToString()).FontSize(36).Bold();
@@ -207,7 +205,7 @@ namespace GestionStages.Controllers
                                     text.Span("Étudiants inscrits").FontSize(14);
                                 });
 
-                            row.RelativeItem().Border(2).BorderColor(Colors.Green.Darken2).Background(Colors.Green.Lighten5).Padding(20).AlignCenter()
+                            grid.Item().Border(2).BorderColor(Colors.Green.Darken2).Background(Colors.Green.Lighten5).Padding(20).AlignCenter()
                                 .Text(text =>
                                 {
                                     text.Span(nbEntreprises.ToString()).FontSize(36).Bold();
@@ -215,7 +213,7 @@ namespace GestionStages.Controllers
                                     text.Span("Entreprises").FontSize(14);
                                 });
 
-                            row.RelativeItem().Border(2).BorderColor(Colors.Teal.Darken2).Background(Colors.Teal.Lighten5).Padding(20).AlignCenter()
+                            grid.Item().Border(2).BorderColor(Colors.Teal.Darken2).Background(Colors.Teal.Lighten5).Padding(20).AlignCenter()
                                 .Text(text =>
                                 {
                                     text.Span(nbOffres.ToString()).FontSize(36).Bold();
@@ -223,17 +221,16 @@ namespace GestionStages.Controllers
                                     text.Span("Offres de stage").FontSize(14);
                                 });
 
-                            row.RelativeItem().Border(2).BorderColor(Colors.Orange.Darken2).Background(Colors.Orange.Lighten5).Padding(20).AlignCenter()
+                            grid.Item().Border(2).BorderColor(Colors.Orange.Darken2).Background(Colors.Orange.Lighten5).Padding(20).AlignCenter()
                                 .Text(text =>
                                 {
                                     text.Span(nbCandidatures.ToString()).FontSize(36).Bold();
                                     text.EmptyLine();
-                                    text.Span($"Candidatures ({nbCandidaturesEnAttente} en attente)").FontSize(12);
+                                    text.Span($"Candidatures\n({nbCandidaturesEnAttente} en attente)").FontSize(12);
                                 });
                         });
 
                         // Offres par secteur
-                        column.Item().PaddingTop(20);
                         column.Item().Text("Offres par secteur d'activité").SemiBold().FontSize(18);
                         column.Item().Table(table =>
                         {
@@ -257,7 +254,6 @@ namespace GestionStages.Controllers
                         });
 
                         // Candidatures par mois
-                        column.Item().PaddingTop(20);
                         column.Item().Text("Évolution des candidatures (12 derniers mois)").SemiBold().FontSize(18);
                         column.Item().Table(table =>
                         {
@@ -285,20 +281,14 @@ namespace GestionStages.Controllers
                             .FontSize(10).FontColor(Colors.Grey.Medium);
                     });
 
-                    // Footer
                     page.Footer().AlignCenter()
-                        .Text(text =>
+                        .Text(x =>
                         {
-                            text.DefaultTextStyle(t =>
-                                t.FontSize(10)
-                                 .FontColor(Colors.Grey.Medium)
-                            );
-
-                            text.Span("Page ");
-                            text.CurrentPageNumber();
-                            text.Span(" / ");
-                            text.TotalPages();
-                        });
+                            x.Span("Page ");
+                            x.CurrentPageNumber();
+                            x.Span(" / ");
+                            x.TotalPages();
+                        }).FontSize(10);
                 });
             });
 

@@ -112,6 +112,11 @@ else if (User.IsInRole("Admin"))
         <a asp-controller="Candidatures" asp-action="Index" class="btn btn-outline-info">Voir les candidatures</a>
         <a asp-controller="Etudiants" asp-action="Index" class="btn btn-outline-secondary">Gérer les étudiants</a>
     </div>
+    <div class="text-center mt-4">
+        <a asp-action="ExportDashboardPdf" class="btn btn-danger btn-lg">
+            📄 Exporter le tableau de bord en PDF
+        </a>
+    </div>
 }
 else if (User.IsInRole("Etudiant"))
 {
