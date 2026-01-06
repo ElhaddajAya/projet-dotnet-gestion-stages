@@ -6,7 +6,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>📋 Conventions de stage</h1>
-    <a asp-action="Create" class="btn btn-primary">+ Créer une convention</a>
+    <div>
+        <a asp-action="Create" class="btn btn-primary me-2">+ Créer une convention</a>
+        <a asp-action="ExportExcel" class="btn btn-success">📥 Exporter en Excel</a>
+    </div>
 </div>
 
 @if (TempData["Success"] != null)

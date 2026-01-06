@@ -343,5 +343,56 @@ namespace GestionStages.Controllers
         {
             return _context.Conventions.Any(e => e.Id == id);
         }
+
+        // GET: Conventions/ExportExcel
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var conventions = await _context.Conventions
+                .Include(c => c.Candidature)
+                    .ThenInclude(ca => ca.Etudiant)
+                .Include(c => c.Candidature)
+                    .ThenInclude(ca => ca.OffreStage)
+                        .ThenInclude(o => o.Entreprise)
+                .Select(c => new
+                {
+                    Étudiant = c.Candidature.Etudiant.Nom + " " + c.Candidature.Etudiant.Prenom,
+                    Email_Étudiant = c.Candidature.Etudiant.Email,
+                    Filière = c.Candidature.Etudiant.Filiere,
+                    Offre = c.Candidature.OffreStage.Titre,
+                    Entreprise = c.Candidature.OffreStage.Entreprise.Nom,
+                    Secteur = c.Candidature.OffreStage.Entreprise.Secteur,
+                    Date_Signature = c.DateSignature.ToString("dd/MM/yyyy"),
+                    Date_Début = c.DateDebut.ToString("dd/MM/yyyy"),
+                    Date_Fin = c.DateFin.ToString("dd/MM/yyyy"),
+                    Statut = c.Statut
+                })
+                .ToListAsync();
+
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Conventions");
+
+            // Titre
+            worksheet.Cell(1, 1).Value = "Liste des conventions de stage";
+            worksheet.Cell(1, 1).Style.Font.Bold = true;
+            worksheet.Cell(1, 1).Style.Font.FontSize = 16;
+            worksheet.Row(1).Height = 30;
+
+            // Tableau
+            var range = worksheet.Cell(3, 1).InsertTable(conventions);
+            range.Theme = ClosedXML.Excel.XLTableTheme.TableStyleMedium9;
+
+            // Ajuster colonnes
+            worksheet.Columns().AdjustToContents();
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            var content = stream.ToArray();
+
+            return File(
+                content,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Conventions_{DateTime.Now:yyyy-MM-dd}.xlsx");
+        }
     }
 }

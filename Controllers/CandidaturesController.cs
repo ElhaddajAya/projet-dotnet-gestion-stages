@@ -376,7 +376,7 @@ namespace GestionStages.Controllers
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Candidature supprimée avec succès !";
             }
-
+            
             return RedirectToAction(nameof(Index));
         }
 
