@@ -147,11 +147,11 @@
             {
                 @if (Model.Statut == "En attente")
                 {
-                    <form asp-action="Accepter" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                    <form asp-action="Accept" asp-route-id="@Model.Id" method="post" style="display: inline;">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn btn-success w-100">✓ Accepter la candidature</button>
                     </form>
-                    <form asp-action="Refuser" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                    <form asp-action="Reject" asp-route-id="@Model.Id" method="post" style="display: inline;">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn btn-danger w-100">✗ Refuser la candidature</button>
                     </form>
