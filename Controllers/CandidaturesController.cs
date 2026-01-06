@@ -379,5 +379,50 @@ namespace GestionStages.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        // GET: Candidatures/ExportExcel
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var candidatures = await _context.Candidatures
+                .Include(c => c.Etudiant)
+                .Include(c => c.OffreStage)
+                    .ThenInclude(o => o.Entreprise)
+                .Select(c => new
+                {
+                    Étudiant = c.Etudiant.Nom + " " + c.Etudiant.Prenom,
+                    Email_Étudiant = c.Etudiant.Email,
+                    Offre = c.OffreStage.Titre,
+                    Entreprise = c.OffreStage.Entreprise.Nom,
+                    Date_Candidature = c.DateCandidature.ToString("dd/MM/yyyy"),
+                    Statut = c.Statut
+                })
+                .ToListAsync();
+
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Candidatures");
+
+            // En-tête
+            worksheet.Cell(1, 1).Value = "Liste des candidatures";
+            worksheet.Cell(1, 1).Style.Font.Bold = true;
+            worksheet.Cell(1, 1).Style.Font.FontSize = 16;
+            worksheet.Row(1).Height = 30;
+
+            // Colonnes
+            var range = worksheet.Cell(3, 1).InsertTable(candidatures);
+            range.Theme = ClosedXML.Excel.XLTableTheme.TableStyleMedium9;
+
+            // Ajuster la largeur
+            worksheet.Columns().AdjustToContents();
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            var content = stream.ToArray();
+
+            return File(
+                content,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Candidatures_{DateTime.Now:yyyy-MM-dd}.xlsx");
+        }
     }
 }

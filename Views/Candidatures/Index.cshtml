@@ -20,6 +20,13 @@
                 <text>📊 Toutes les candidatures</text>
             }
         </h2>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="ExportExcel" class="btn btn-success">
+                📥 Exporter en Excel
+            </a>
+        }
     </div>
 
     @if (TempData["Success"] != null)
