@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace GestionStages.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Etudiant,Entreprise")]
     public class ConventionsController : Controller
     {
         private readonly StagesDbContext _context;
@@ -40,6 +40,31 @@ namespace GestionStages.Controllers
                     .ThenInclude(cand => cand.OffreStage)
                         .ThenInclude(o => o.Entreprise)
                 .AsQueryable();
+
+            if (User.IsInRole("Etudiant"))
+            {
+                var userEmail = User.Identity.Name;
+                var etudiant = await _context.Etudiants
+                    .FirstOrDefaultAsync(e => e.Email == userEmail);
+
+                if (etudiant != null)
+                {
+                    conventionsQuery = conventionsQuery
+                        .Where(c => c.Candidature.EtudiantId == etudiant.Id);
+                }
+            }
+            else if (User.IsInRole("Entreprise"))
+            {
+                var userEmail = User.Identity.Name;
+                var entreprise = await _context.Entreprises
+                    .FirstOrDefaultAsync(e => e.EmailContact == userEmail);
+
+                if (entreprise != null)
+                {
+                    conventionsQuery = conventionsQuery
+                        .Where(c => c.Candidature.OffreStage.EntrepriseId == entreprise.Id);
+                }
+            }
 
             // RECHERCHE
             if (!string.IsNullOrEmpty(searchString))

@@ -114,6 +114,7 @@
                     <th>@Html.DisplayNameFor(model => model.DateDebut)</th>
                     <th>@Html.DisplayNameFor(model => model.DateFin)</th>
                     <th>@Html.DisplayNameFor(model => model.Statut)</th>
+                    <th>PDF signé</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -137,8 +138,9 @@
                         {
                             <td>@Html.DisplayFor(modelItem => item.Candidature.OffreStage.Entreprise.Nom)</td>
                         }
-                    <td>@item.DateDebut.ToString("dd/MM/yyyy")</td>
-                    <td>@item.DateFin.ToString("dd/MM/yyyy")</td>
+
+                    <td>@Html.DisplayFor(modelItem => item.DateDebut, "{0:dd/MM/yyyy}")</td>
+                    <td>@Html.DisplayFor(modelItem => item.DateFin, "{0:dd/MM/yyyy}")</td>
                     <td>
                         <span class="badge
                         @(item.Statut == "Signée" ? "bg-info" :
@@ -147,15 +149,25 @@
                         @Html.DisplayFor(modelItem => item.Statut)
                     </span>
                 </td>
-                <td class="text-end">
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info btn-sm">👁️</a>
+                <td>
+                @if (!string.IsNullOrEmpty(item.CheminFichierPDF))
+                        {
+                            <a asp-action="DownloadPdf" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">📄 Télécharger</a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Non uploadé</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info btn-sm">👁️ Détails</a>
 
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning btn-sm">✏️</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm"
-                            onclick="return confirm('Supprimer cette convention ?')">🗑️</a>
-                    }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning btn-sm">✏️</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Supprimer cette convention ?')">🗑️</a>
+                        }
                     </td>
                 </tr>
                 }

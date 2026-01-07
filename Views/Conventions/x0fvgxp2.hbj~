@@ -48,10 +48,11 @@
                     <!-- Barre de recherche -->
                     <div class="col-md-8">
                         <label class="form-label">🔎 Rechercher</label>
-                        <input type="text" name="searchString" value="@ViewBag.CurrentSearch" class="form-control"
-                               placeholder="@(User.IsInRole("Admin") ? "Rechercher par étudiant, offre, entreprise..." :
-                                                    User.IsInRole("Etudiant") ? "Rechercher dans ma convention..." :
-                                                    "Rechercher dans mes conventions...")" />
+                        <input type="text"
+                               name="searchString"
+                               value="@ViewBag.CurrentSearch"
+                               class="form-control"
+                               placeholder="Nom étudiant, entreprise, titre d'offre..." />
                     </div>
 
                     <!-- Filtre par statut -->
@@ -95,25 +96,14 @@
     <!-- TABLEAU DES CONVENTIONS -->
     <div class="table-responsive">
         <table class="table table-hover">
-            <thead>
+            <thead class="table-light">
                 <tr>
-                    <th>@Html.DisplayNameFor(model => model.Id)</th>
-
-                    @if (!User.IsInRole("Etudiant"))
-                    {
-                        <th>Stagiaire</th>
-                    }
-
-                    <th>Offre</th>
-
-                    @if (!User.IsInRole("Entreprise"))
-                    {
-                        <th>Entreprise</th>
-                    }
-
-                    <th>@Html.DisplayNameFor(model => model.DateDebut)</th>
-                    <th>@Html.DisplayNameFor(model => model.DateFin)</th>
-                    <th>@Html.DisplayNameFor(model => model.Statut)</th>
+                    <th>Étudiant</th>
+                    <th>Offre de stage</th>
+                    <th>Entreprise</th>
+                    <th>Date début</th>
+                    <th>Date fin</th>
+                    <th>Statut</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -121,43 +111,39 @@
                 @foreach (var item in Model)
                 {
                     <tr>
-                        <td>@Html.DisplayFor(modelItem => item.Id)</td>
-
-                        @if (!User.IsInRole("Etudiant"))
-                        {
-                            <td>
-                                @Html.DisplayFor(modelItem => item.Candidature.Etudiant.Nom)
-                                @Html.DisplayFor(modelItem => item.Candidature.Etudiant.Prenom)
-                            </td>
-                        }
-
-                        <td>@Html.DisplayFor(modelItem => item.Candidature.OffreStage.Titre)</td>
-
-                        @if (!User.IsInRole("Entreprise"))
-                        {
-                            <td>@Html.DisplayFor(modelItem => item.Candidature.OffreStage.Entreprise.Nom)</td>
-                        }
-                    <td>@item.DateDebut.ToString("dd/MM/yyyy")</td>
-                    <td>@item.DateFin.ToString("dd/MM/yyyy")</td>
-                    <td>
-                        <span class="badge
-                        @(item.Statut == "Signée" ? "bg-info" :
-                                                    item.Statut == "En cours" ? "bg-success" :
-                                                    "bg-secondary")">
-                        @Html.DisplayFor(modelItem => item.Statut)
-                    </span>
-                </td>
-                <td class="text-end">
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info btn-sm">👁️</a>
-
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning btn-sm">✏️</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm"
-                            onclick="return confirm('Supprimer cette convention ?')">🗑️</a>
-                    }
-                    </td>
-                </tr>
+                        <td>
+                            <strong>@item.Candidature.Etudiant.Nom @item.Candidature.Etudiant.Prenom</strong>
+                        </td>
+                        <td>@item.Candidature.OffreStage.Titre</td>
+                        <td>@item.Candidature.OffreStage.Entreprise.Nom</td>
+                        <td>@item.DateDebut.ToString("dd/MM/yyyy")</td>
+                        <td>@item.DateFin.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (item.Statut == "En cours")
+                            {
+                                <span class="badge bg-primary">🔄 @item.Statut</span>
+                            }
+                            else if (item.Statut == "Terminée")
+                            {
+                                <span class="badge bg-success">✓ @item.Statut</span>
+                            }
+                            else if (item.Statut == "Signée")
+                            {
+                                <span class="badge bg-info">📝 @item.Statut</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@item.Statut</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info" title="Détails">👁️</a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning" title="Modifier">✏️</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" title="Supprimer">🗑️</a>
+                            </div>
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>

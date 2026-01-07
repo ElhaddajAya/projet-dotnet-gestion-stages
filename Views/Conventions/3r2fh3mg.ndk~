@@ -137,6 +137,7 @@
                         {
                             <td>@Html.DisplayFor(modelItem => item.Candidature.OffreStage.Entreprise.Nom)</td>
                         }
+
                     <td>@item.DateDebut.ToString("dd/MM/yyyy")</td>
                     <td>@item.DateFin.ToString("dd/MM/yyyy")</td>
                     <td>
